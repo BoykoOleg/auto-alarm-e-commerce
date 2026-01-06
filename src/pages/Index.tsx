@@ -4,11 +4,15 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Label } from '@/components/ui/label'
 import Icon from '@/components/ui/icon'
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState('home')
   const [selectedCategory, setSelectedCategory] = useState('all')
+  const [selectedCarBrand, setSelectedCarBrand] = useState('')
+  const [selectedService, setSelectedService] = useState('')
 
   const categories = [
     { id: 'all', name: 'Все товары', icon: 'Grid3x3' },
@@ -549,6 +553,88 @@ const Index = () => {
                     </CardContent>
                   </Card>
                 </div>
+
+                <Card className="mt-12 max-w-2xl mx-auto animate-fade-in" style={{ animationDelay: '0.3s' }}>
+                  <CardHeader>
+                    <CardTitle className="font-heading text-2xl">Заявка на русификацию</CardTitle>
+                    <CardDescription>
+                      Заполните форму и мы свяжемся с вами для уточнения деталей
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <form className="space-y-4">
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <Label htmlFor="russification-name">Ваше имя *</Label>
+                          <Input id="russification-name" placeholder="Иван Иванов" className="mt-1.5" />
+                        </div>
+                        <div>
+                          <Label htmlFor="russification-phone">Телефон *</Label>
+                          <Input id="russification-phone" type="tel" placeholder="+7 (900) 123-45-67" className="mt-1.5" />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="russification-car-brand">Марка автомобиля *</Label>
+                        <Select value={selectedCarBrand} onValueChange={setSelectedCarBrand}>
+                          <SelectTrigger id="russification-car-brand" className="mt-1.5">
+                            <SelectValue placeholder="Выберите марку" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="toyota">Toyota</SelectItem>
+                            <SelectItem value="mercedes">Mercedes-Benz</SelectItem>
+                            <SelectItem value="bmw">BMW</SelectItem>
+                            <SelectItem value="audi">Audi</SelectItem>
+                            <SelectItem value="volkswagen">Volkswagen</SelectItem>
+                            <SelectItem value="hyundai">Hyundai</SelectItem>
+                            <SelectItem value="kia">Kia</SelectItem>
+                            <SelectItem value="mazda">Mazda</SelectItem>
+                            <SelectItem value="nissan">Nissan</SelectItem>
+                            <SelectItem value="honda">Honda</SelectItem>
+                            <SelectItem value="lexus">Lexus</SelectItem>
+                            <SelectItem value="volvo">Volvo</SelectItem>
+                            <SelectItem value="other">Другая марка</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="russification-model">Модель и год выпуска *</Label>
+                        <Input id="russification-model" placeholder="Camry 2020" className="mt-1.5" />
+                      </div>
+
+                      <div>
+                        <Label htmlFor="russification-service">Тип русификации *</Label>
+                        <Select value={selectedService} onValueChange={setSelectedService}>
+                          <SelectTrigger id="russification-service" className="mt-1.5">
+                            <SelectValue placeholder="Выберите услугу" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="multimedia">Мультимедийная система</SelectItem>
+                            <SelectItem value="dashboard">Бортовой компьютер</SelectItem>
+                            <SelectItem value="both">Комплексная русификация</SelectItem>
+                            <SelectItem value="consultation">Консультация</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="russification-comment">Дополнительная информация</Label>
+                        <Textarea 
+                          id="russification-comment" 
+                          placeholder="Опишите какие функции важны для вас" 
+                          rows={3}
+                          className="mt-1.5"
+                        />
+                      </div>
+
+                      <Button className="w-full" size="lg">
+                        <Icon name="Send" className="mr-2 h-5 w-5" />
+                        Отправить заявку
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
               </div>
             </div>
           </section>
