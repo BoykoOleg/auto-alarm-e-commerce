@@ -132,6 +132,14 @@ const Index = () => {
               Каталог
             </button>
             <button
+              onClick={() => setActiveSection('russification')}
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                activeSection === 'russification' ? 'text-primary' : 'text-foreground/60'
+              }`}
+            >
+              Русификация
+            </button>
+            <button
               onClick={() => setActiveSection('services')}
               className={`text-sm font-medium transition-colors hover:text-primary ${
                 activeSection === 'services' ? 'text-primary' : 'text-foreground/60'
@@ -364,6 +372,183 @@ const Index = () => {
                     </CardFooter>
                   </Card>
                 ))}
+              </div>
+            </div>
+          </section>
+        )}
+
+        {activeSection === 'russification' && (
+          <section className="py-20">
+            <div className="container px-4">
+              <div className="max-w-5xl mx-auto">
+                <div className="text-center mb-12">
+                  <Badge className="mb-4">🌐 Русификация автомобилей</Badge>
+                  <h2 className="font-heading text-3xl font-bold mb-4">Русификация автомобильных систем</h2>
+                  <p className="text-muted-foreground text-lg max-w-3xl mx-auto">
+                    Профессиональная русификация мультимедиа, бортовых компьютеров и других систем для вашего комфорта
+                  </p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-8 mb-16">
+                  <Card className="animate-fade-in">
+                    <CardHeader>
+                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 mb-4">
+                        <Icon name="Monitor" className="h-6 w-6 text-primary" />
+                      </div>
+                      <CardTitle className="font-heading text-2xl">Мультимедийные системы</CardTitle>
+                      <CardDescription className="text-base">
+                        Русификация меню, голосовых команд и интерфейса
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-3">
+                        <li className="flex items-start gap-2">
+                          <Icon name="CheckCircle" className="h-5 w-5 text-primary mt-0.5" />
+                          <span>Перевод всех пунктов меню на русский язык</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Icon name="CheckCircle" className="h-5 w-5 text-primary mt-0.5" />
+                          <span>Установка русских голосовых подсказок</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Icon name="CheckCircle" className="h-5 w-5 text-primary mt-0.5" />
+                          <span>Русские карты навигации</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Icon name="CheckCircle" className="h-5 w-5 text-primary mt-0.5" />
+                          <span>Настройка русской клавиатуры</span>
+                        </li>
+                      </ul>
+                      <div className="mt-6 pt-6 border-t">
+                        <p className="text-lg font-bold text-primary mb-2">от 5 000 ₽</p>
+                        <Button className="w-full">
+                          Заказать русификацию
+                          <Icon name="ArrowRight" className="ml-2 h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="animate-fade-in" style={{ animationDelay: '0.1s' }}>
+                    <CardHeader>
+                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 mb-4">
+                        <Icon name="Gauge" className="h-6 w-6 text-primary" />
+                      </div>
+                      <CardTitle className="font-heading text-2xl">Бортовые компьютеры</CardTitle>
+                      <CardDescription className="text-base">
+                        Русификация приборной панели и информационных экранов
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-3">
+                        <li className="flex items-start gap-2">
+                          <Icon name="CheckCircle" className="h-5 w-5 text-primary mt-0.5" />
+                          <span>Перевод сообщений на приборной панели</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Icon name="CheckCircle" className="h-5 w-5 text-primary mt-0.5" />
+                          <span>Русификация меню настроек автомобиля</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Icon name="CheckCircle" className="h-5 w-5 text-primary mt-0.5" />
+                          <span>Перевод предупреждений и уведомлений</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Icon name="CheckCircle" className="h-5 w-5 text-primary mt-0.5" />
+                          <span>Настройка региональных параметров</span>
+                        </li>
+                      </ul>
+                      <div className="mt-6 pt-6 border-t">
+                        <p className="text-lg font-bold text-primary mb-2">от 4 000 ₽</p>
+                        <Button className="w-full">
+                          Заказать русификацию
+                          <Icon name="ArrowRight" className="ml-2 h-4 w-4" />
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <Card className="mb-12 bg-gradient-to-br from-primary/5 to-accent/5 animate-scale-in">
+                  <CardHeader>
+                    <CardTitle className="font-heading text-2xl">Поддерживаемые марки автомобилей</CardTitle>
+                    <CardDescription>
+                      Работаем с большинством популярных марок и моделей
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      {[
+                        { name: 'Toyota', icon: 'Car' },
+                        { name: 'Mercedes', icon: 'Car' },
+                        { name: 'BMW', icon: 'Car' },
+                        { name: 'Audi', icon: 'Car' },
+                        { name: 'Volkswagen', icon: 'Car' },
+                        { name: 'Hyundai', icon: 'Car' },
+                        { name: 'Kia', icon: 'Car' },
+                        { name: 'Mazda', icon: 'Car' }
+                      ].map((brand) => (
+                        <div key={brand.name} className="flex items-center gap-3 p-3 rounded-lg bg-background hover:bg-primary/5 transition-colors">
+                          <Icon name={brand.icon} className="h-6 w-6 text-primary" />
+                          <span className="font-semibold">{brand.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-sm text-muted-foreground mt-6 text-center">
+                      Не нашли свою марку? Свяжитесь с нами для уточнения возможности русификации
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <div className="grid md:grid-cols-3 gap-6">
+                  <Card className="text-center animate-slide-up">
+                    <CardHeader>
+                      <div className="flex justify-center mb-4">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                          <Icon name="Clock" className="h-8 w-8 text-primary" />
+                        </div>
+                      </div>
+                      <CardTitle className="font-heading">Быстро</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        Русификация занимает от 1 до 3 часов в зависимости от модели
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="text-center animate-slide-up" style={{ animationDelay: '0.1s' }}>
+                    <CardHeader>
+                      <div className="flex justify-center mb-4">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                          <Icon name="Shield" className="h-8 w-8 text-primary" />
+                        </div>
+                      </div>
+                      <CardTitle className="font-heading">Безопасно</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        Сохраняем заводскую гарантию, используем официальные методы
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="text-center animate-slide-up" style={{ animationDelay: '0.2s' }}>
+                    <CardHeader>
+                      <div className="flex justify-center mb-4">
+                        <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary/10">
+                          <Icon name="Wrench" className="h-8 w-8 text-primary" />
+                        </div>
+                      </div>
+                      <CardTitle className="font-heading">Качественно</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        Полный перевод всех функций без потери функциональности
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
             </div>
           </section>
