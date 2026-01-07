@@ -13,6 +13,14 @@ const Index = () => {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedCarBrand, setSelectedCarBrand] = useState('')
   const [selectedService, setSelectedService] = useState('')
+  const [formData, setFormData] = useState({
+    name: '',
+    phone: '',
+    car: '',
+    message: ''
+  })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
 
   const categories = [
     { id: 'all', name: 'Все товары', icon: 'Grid3x3' },
@@ -187,23 +195,23 @@ const Index = () => {
               <div className="container px-4">
                 <div className="mx-auto max-w-3xl text-center animate-fade-in">
                   <Badge className="mb-4 bg-primary/10 text-primary hover:bg-primary/20">
-                    🚗 Защита вашего автомобиля
+                    🌐 Профессиональная русификация автомобилей
                   </Badge>
                   <h1 className="font-heading text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl mb-6">
-                    Современные системы безопасности для автомобилей
+                    Русификация магнитол и бортовых систем
                   </h1>
                   <p className="text-lg text-muted-foreground mb-8">
-                    Профессиональная установка сигнализаций, автозапуска и дополнительного оборудования. 
-                    Гарантия качества и надежности.
+                    Превратим интерфейс вашего автомобиля на русский язык. Работаем с любыми марками. 
+                    Быстро, качественно, с гарантией.
                   </p>
                   <div className="flex flex-col sm:flex-row gap-4 justify-center">
                     <Button 
                       size="lg" 
                       className="text-base font-semibold"
-                      onClick={() => setActiveSection('catalog')}
+                      onClick={() => setActiveSection('russification')}
                     >
-                      <Icon name="ShoppingCart" className="mr-2 h-5 w-5" />
-                      Смотреть каталог
+                      <Icon name="Languages" className="mr-2 h-5 w-5" />
+                      Узнать подробнее
                     </Button>
                     <Button 
                       size="lg" 
@@ -219,6 +227,130 @@ const Index = () => {
               </div>
               <div className="absolute top-1/2 left-0 w-96 h-96 bg-primary/20 rounded-full blur-3xl -translate-y-1/2 -translate-x-1/2" />
               <div className="absolute top-1/4 right-0 w-96 h-96 bg-accent/20 rounded-full blur-3xl translate-x-1/2" />
+            </section>
+
+            <section className="py-16 md:py-24 bg-background">
+              <div className="container px-4">
+                <div className="text-center mb-12">
+                  <h2 className="font-heading text-3xl font-bold mb-4">Русификация автомобилей</h2>
+                  <p className="text-muted-foreground max-w-2xl mx-auto">
+                    Полная адаптация интерфейса вашего автомобиля под русский язык
+                  </p>
+                </div>
+                
+                <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto mb-12">
+                  <Card className="border-2">
+                    <CardHeader>
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                          <Icon name="Languages" className="h-6 w-6 text-primary" />
+                        </div>
+                        <CardTitle>Что мы русифицируем?</CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-3">
+                        <li className="flex items-start gap-2">
+                          <Icon name="Check" className="h-5 w-5 text-primary mt-0.5" />
+                          <span>Мультимедийные системы и магнитолы</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Icon name="Check" className="h-5 w-5 text-primary mt-0.5" />
+                          <span>Бортовые компьютеры и приборные панели</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Icon name="Check" className="h-5 w-5 text-primary mt-0.5" />
+                          <span>Навигационные системы</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Icon name="Check" className="h-5 w-5 text-primary mt-0.5" />
+                          <span>Системы климат-контроля</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Icon name="Check" className="h-5 w-5 text-primary mt-0.5" />
+                          <span>Меню настроек автомобиля</span>
+                        </li>
+                      </ul>
+                    </CardContent>
+                  </Card>
+
+                  <Card className="border-2">
+                    <CardHeader>
+                      <div className="flex items-center gap-3 mb-2">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10">
+                          <Icon name="Star" className="h-6 w-6 text-primary" />
+                        </div>
+                        <CardTitle>Наши преимущества</CardTitle>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-3">
+                        <li className="flex items-start gap-2">
+                          <Icon name="Zap" className="h-5 w-5 text-primary mt-0.5" />
+                          <span><strong>Быстро:</strong> работа занимает от 1 до 3 часов</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Icon name="Shield" className="h-5 w-5 text-primary mt-0.5" />
+                          <span><strong>Безопасно:</strong> сохраняем заводскую гарантию</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Icon name="Award" className="h-5 w-5 text-primary mt-0.5" />
+                          <span><strong>Качественно:</strong> официальные прошивки и шрифты</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Icon name="Users" className="h-5 w-5 text-primary mt-0.5" />
+                          <span><strong>Опыт:</strong> работаем с 2015 года, более 5000 автомобилей</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <Icon name="Sparkles" className="h-5 w-5 text-primary mt-0.5" />
+                          <span><strong>Гарантия:</strong> 1 год на все виды работ</span>
+                        </li>
+                      </ul>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div className="bg-gradient-to-br from-primary/5 to-accent/5 rounded-2xl p-8 md:p-12 max-w-4xl mx-auto">
+                  <div className="text-center mb-8">
+                    <h3 className="font-heading text-2xl font-bold mb-3">Почему русификация важна?</h3>
+                    <p className="text-muted-foreground">
+                      Комфорт и безопасность управления автомобилем начинаются с понятного интерфейса
+                    </p>
+                  </div>
+                  
+                  <div className="grid sm:grid-cols-3 gap-6">
+                    <div className="text-center">
+                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+                        <Icon name="Eye" className="h-8 w-8 text-primary" />
+                      </div>
+                      <h4 className="font-semibold mb-2">Понятно с первого взгляда</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Не нужно угадывать значение иконок и англоязычных меню
+                      </p>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+                        <Icon name="Car" className="h-8 w-8 text-primary" />
+                      </div>
+                      <h4 className="font-semibold mb-2">Безопасность вождения</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Меньше отвлекаетесь от дороги, быстрее находите нужные функции
+                      </p>
+                    </div>
+                    
+                    <div className="text-center">
+                      <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+                        <Icon name="TrendingUp" className="h-8 w-8 text-primary" />
+                      </div>
+                      <h4 className="font-semibold mb-2">Полный функционал</h4>
+                      <p className="text-sm text-muted-foreground">
+                        Используйте все возможности автомобиля на 100%
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </section>
 
             <section className="py-16 bg-background">
@@ -562,21 +694,57 @@ const Index = () => {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <form className="space-y-4">
+                    <form className="space-y-4" onSubmit={async (e) => {
+                      e.preventDefault()
+                      setIsSubmitting(true)
+                      setSubmitStatus('idle')
+                      
+                      const formElement = e.target as HTMLFormElement
+                      const formData = {
+                        name: (formElement.elements.namedItem('russification-name') as HTMLInputElement).value,
+                        phone: (formElement.elements.namedItem('russification-phone') as HTMLInputElement).value,
+                        car: `${selectedCarBrand} ${(formElement.elements.namedItem('russification-model') as HTMLInputElement).value}`,
+                        message: `Тип русификации: ${selectedService}. ${(formElement.elements.namedItem('russification-comment') as HTMLTextAreaElement).value}`,
+                        type: 'Русификация'
+                      }
+                      
+                      try {
+                        const response = await fetch('https://functions.poehali.dev/3ecd03ac-7f19-45a4-b1aa-563f140ea3c9', {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify(formData)
+                        })
+                        
+                        if (response.ok) {
+                          setSubmitStatus('success')
+                          formElement.reset()
+                          setSelectedCarBrand('')
+                          setSelectedService('')
+                        } else {
+                          setSubmitStatus('error')
+                        }
+                      } catch (error) {
+                        setSubmitStatus('error')
+                      } finally {
+                        setIsSubmitting(false)
+                      }
+                    }}>
                       <div className="grid md:grid-cols-2 gap-4">
                         <div>
                           <Label htmlFor="russification-name">Ваше имя *</Label>
-                          <Input id="russification-name" placeholder="Иван Иванов" className="mt-1.5" />
+                          <Input id="russification-name" name="russification-name" placeholder="Иван Иванов" className="mt-1.5" required />
                         </div>
                         <div>
                           <Label htmlFor="russification-phone">Телефон *</Label>
-                          <Input id="russification-phone" type="tel" placeholder="+7 (900) 123-45-67" className="mt-1.5" />
+                          <Input id="russification-phone" name="russification-phone" type="tel" placeholder="+7 (900) 123-45-67" className="mt-1.5" required />
                         </div>
                       </div>
 
                       <div>
                         <Label htmlFor="russification-car-brand">Марка автомобиля *</Label>
-                        <Select value={selectedCarBrand} onValueChange={setSelectedCarBrand}>
+                        <Select value={selectedCarBrand} onValueChange={setSelectedCarBrand} required>
                           <SelectTrigger id="russification-car-brand" className="mt-1.5">
                             <SelectValue placeholder="Выберите марку" />
                           </SelectTrigger>
@@ -600,12 +768,12 @@ const Index = () => {
 
                       <div>
                         <Label htmlFor="russification-model">Модель и год выпуска *</Label>
-                        <Input id="russification-model" placeholder="Camry 2020" className="mt-1.5" />
+                        <Input id="russification-model" name="russification-model" placeholder="Camry 2020" className="mt-1.5" required />
                       </div>
 
                       <div>
                         <Label htmlFor="russification-service">Тип русификации *</Label>
-                        <Select value={selectedService} onValueChange={setSelectedService}>
+                        <Select value={selectedService} onValueChange={setSelectedService} required>
                           <SelectTrigger id="russification-service" className="mt-1.5">
                             <SelectValue placeholder="Выберите услугу" />
                           </SelectTrigger>
@@ -621,16 +789,31 @@ const Index = () => {
                       <div>
                         <Label htmlFor="russification-comment">Дополнительная информация</Label>
                         <Textarea 
-                          id="russification-comment" 
+                          id="russification-comment"
+                          name="russification-comment" 
                           placeholder="Опишите какие функции важны для вас" 
                           rows={3}
                           className="mt-1.5"
                         />
                       </div>
 
-                      <Button className="w-full" size="lg">
+                      {submitStatus === 'success' && (
+                        <div className="bg-green-50 text-green-700 p-3 rounded-lg flex items-center gap-2">
+                          <Icon name="CheckCircle" className="h-5 w-5" />
+                          <span>Заявка успешно отправлена! Мы свяжемся с вами в ближайшее время.</span>
+                        </div>
+                      )}
+                      
+                      {submitStatus === 'error' && (
+                        <div className="bg-red-50 text-red-700 p-3 rounded-lg flex items-center gap-2">
+                          <Icon name="XCircle" className="h-5 w-5" />
+                          <span>Ошибка отправки. Пожалуйста, попробуйте позже или позвоните нам.</span>
+                        </div>
+                      )}
+
+                      <Button className="w-full" size="lg" type="submit" disabled={isSubmitting}>
                         <Icon name="Send" className="mr-2 h-5 w-5" />
-                        Отправить заявку
+                        {isSubmitting ? 'Отправка...' : 'Отправить заявку'}
                       </Button>
                     </form>
                   </CardContent>
@@ -728,22 +911,23 @@ const Index = () => {
 
                 <Card className="mb-8 animate-fade-in">
                   <CardHeader>
-                    <CardTitle className="font-heading text-2xl">AutoSecure - защита вашего автомобиля</CardTitle>
+                    <CardTitle className="font-heading text-2xl">DivisionAuto - ваш эксперт по русификации</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4 text-muted-foreground">
                     <p>
-                      Мы специализируемся на продаже и установке автомобильных сигнализаций и дополнительного 
-                      оборудования уже более 5 лет. За это время мы завоевали доверие более 500 клиентов 
-                      по всей России.
+                      Мы специализируемся на русификации магнитол, бортовых компьютеров и мультимедийных систем 
+                      уже более 10 лет. За это время мы помогли более 5000 владельцев автомобилей 
+                      по всей России получить полностью русифицированный интерфейс авто.
                     </p>
                     <p>
-                      Наша команда состоит из сертифицированных специалистов, которые проходят регулярное 
-                      обучение у производителей оборудования. Мы работаем только с проверенными брендами 
-                      и даем гарантию на все наши работы.
+                      Наша команда состоит из сертифицированных специалистов по автомобильной электронике. 
+                      Мы работаем со всеми популярными марками автомобилей и используем только официальные прошивки 
+                      и языковые пакеты. Гарантия на все виды работ - 1 год.
                     </p>
                     <p>
-                      В нашем ассортименте представлены решения для любого бюджета - от базовых сигнализаций 
-                      до премиальных систем безопасности с GPS-мониторингом и мобильным приложением.
+                      Русификация - это не просто перевод меню, а полная адаптация интерфейса автомобиля для 
+                      удобства и безопасности вождения. Мы работаем с автомобилями всех марок - от японских 
+                      до премиальных европейских брендов.
                     </p>
                   </CardContent>
                 </Card>
@@ -866,22 +1050,71 @@ const Index = () => {
                       </CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <form className="space-y-4">
+                      <form className="space-y-4" onSubmit={async (e) => {
+                        e.preventDefault()
+                        setIsSubmitting(true)
+                        setSubmitStatus('idle')
+                        
+                        const formElement = e.target as HTMLFormElement
+                        const formData = {
+                          name: (formElement.elements.namedItem('contact-name') as HTMLInputElement).value,
+                          phone: (formElement.elements.namedItem('contact-phone') as HTMLInputElement).value,
+                          car: (formElement.elements.namedItem('contact-email') as HTMLInputElement).value,
+                          message: (formElement.elements.namedItem('contact-message') as HTMLTextAreaElement).value,
+                          type: 'Обратная связь'
+                        }
+                        
+                        try {
+                          const response = await fetch('https://functions.poehali.dev/3ecd03ac-7f19-45a4-b1aa-563f140ea3c9', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(formData)
+                          })
+                          
+                          if (response.ok) {
+                            setSubmitStatus('success')
+                            formElement.reset()
+                          } else {
+                            setSubmitStatus('error')
+                          }
+                        } catch (error) {
+                          setSubmitStatus('error')
+                        } finally {
+                          setIsSubmitting(false)
+                        }
+                      }}>
                         <div>
-                          <Input placeholder="Ваше имя" />
+                          <Input name="contact-name" placeholder="Ваше имя" required />
                         </div>
                         <div>
-                          <Input type="tel" placeholder="Телефон" />
+                          <Input name="contact-phone" type="tel" placeholder="Телефон" required />
                         </div>
                         <div>
-                          <Input type="email" placeholder="Email" />
+                          <Input name="contact-email" type="email" placeholder="Email" />
                         </div>
                         <div>
-                          <Textarea placeholder="Сообщение" rows={4} />
+                          <Textarea name="contact-message" placeholder="Сообщение" rows={4} required />
                         </div>
-                        <Button className="w-full">
+                        
+                        {submitStatus === 'success' && (
+                          <div className="bg-green-50 text-green-700 p-3 rounded-lg flex items-center gap-2">
+                            <Icon name="CheckCircle" className="h-5 w-5" />
+                            <span>Сообщение отправлено!</span>
+                          </div>
+                        )}
+                        
+                        {submitStatus === 'error' && (
+                          <div className="bg-red-50 text-red-700 p-3 rounded-lg flex items-center gap-2">
+                            <Icon name="XCircle" className="h-5 w-5" />
+                            <span>Ошибка отправки.</span>
+                          </div>
+                        )}
+                        
+                        <Button className="w-full" type="submit" disabled={isSubmitting}>
                           <Icon name="Send" className="mr-2 h-4 w-4" />
-                          Отправить заявку
+                          {isSubmitting ? 'Отправка...' : 'Отправить заявку'}
                         </Button>
                       </form>
                     </CardContent>
@@ -904,16 +1137,16 @@ const Index = () => {
                 <span className="font-heading text-xl font-bold">DivisionAuto</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                Защита вашего автомобиля - наша главная задача
+                Русификация и защита вашего автомобиля
               </p>
             </div>
 
             <div>
-              <h3 className="font-heading font-semibold mb-4">Каталог</h3>
+              <h3 className="font-heading font-semibold mb-4">Услуги</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><button className="hover:text-primary transition-colors">Сигнализации</button></li>
-                <li><button className="hover:text-primary transition-colors">Автозапуск</button></li>
-                <li><button className="hover:text-primary transition-colors">Датчики</button></li>
+                <li><button className="hover:text-primary transition-colors" onClick={() => setActiveSection('russification')}>Русификация</button></li>
+                <li><button className="hover:text-primary transition-colors" onClick={() => setActiveSection('catalog')}>Каталог</button></li>
+                <li><button className="hover:text-primary transition-colors" onClick={() => setActiveSection('services')}>Установка</button></li>
                 <li><button className="hover:text-primary transition-colors">Камеры</button></li>
               </ul>
             </div>
