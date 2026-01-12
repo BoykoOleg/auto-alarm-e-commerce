@@ -1,8 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Header } from "@/components/sections/Header";
 import { HomeSection } from "@/components/sections/HomeSection";
 import { MainSections } from "@/components/sections/MainSections";
 import { Footer } from "@/components/sections/Footer";
+import { LoginSection } from "@/components/sections/LoginSection";
+import { DashboardSection } from "@/components/sections/DashboardSection";
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState("home");
@@ -19,6 +21,31 @@ const Index = () => {
   const [submitStatus, setSubmitStatus] = useState<
     "idle" | "success" | "error"
   >("idle");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
+
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    const storedUserData = localStorage.getItem('userData');
+    
+    if (token && storedUserData) {
+      setIsAuthenticated(true);
+      setUserData(JSON.parse(storedUserData));
+    }
+  }, []);
+
+  const handleLoginSuccess = (user: any) => {
+    setIsAuthenticated(true);
+    setUserData(user);
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userData');
+    setIsAuthenticated(false);
+    setUserData(null);
+    setActiveSection('home');
+  };
 
   const categories = [
     { id: "all", name: "Все товары", icon: "Grid3x3" },
@@ -121,9 +148,25 @@ const Index = () => {
       <Header
         activeSection={activeSection}
         setActiveSection={setActiveSection}
+        isAuthenticated={isAuthenticated}
       />
 
       <main>
+        {activeSection === "login" && !isAuthenticated && (
+          <LoginSection 
+            setActiveSection={setActiveSection}
+            onLoginSuccess={handleLoginSuccess}
+          />
+        )}
+
+        {activeSection === "dashboard" && isAuthenticated && (
+          <DashboardSection 
+            setActiveSection={setActiveSection}
+            userData={userData}
+            onLogout={handleLogout}
+          />
+        )}
+
         {activeSection === "home" && (
           <HomeSection setActiveSection={setActiveSection} />
         )}

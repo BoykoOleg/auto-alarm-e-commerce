@@ -1,0 +1,32 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS request for CORS",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedHeaders": {
+        "Access-Control-Allow-Origin": "*"
+      }
+    },
+    {
+      "name": "Create new request without auth",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "client_name": "Test Client",
+        "client_phone": "+79991234567",
+        "car_brand": "Toyota",
+        "car_model": "Camry",
+        "car_year": 2020,
+        "service_type": "multimedia"
+      },
+      "expectedStatus": 401,
+      "expectedBody": {
+        "success": false,
+        "message": "Authorization required"
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

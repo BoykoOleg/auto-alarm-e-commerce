@@ -4,9 +4,10 @@ import Icon from '@/components/ui/icon'
 interface HeaderProps {
   activeSection: string
   setActiveSection: (section: string) => void
+  isAuthenticated?: boolean
 }
 
-export const Header = ({ activeSection, setActiveSection }: HeaderProps) => {
+export const Header = ({ activeSection, setActiveSection, isAuthenticated }: HeaderProps) => {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between px-4">
@@ -68,14 +69,36 @@ export const Header = ({ activeSection, setActiveSection }: HeaderProps) => {
           </button>
         </nav>
 
-        <Button className="hidden md:flex">
-          <Icon name="Phone" className="mr-2 h-4 w-4" />
-          +7 (901) 911-12-51
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button className="hidden md:flex" variant="outline" size="sm">
+            <Icon name="Phone" className="mr-2 h-4 w-4" />
+            +7 (901) 911-12-51
+          </Button>
+          
+          {isAuthenticated ? (
+            <Button 
+              className="hidden md:flex" 
+              size="sm"
+              onClick={() => setActiveSection('dashboard')}
+            >
+              <Icon name="User" className="mr-2 h-4 w-4" />
+              Кабинет
+            </Button>
+          ) : (
+            <Button 
+              className="hidden md:flex" 
+              size="sm"
+              onClick={() => setActiveSection('login')}
+            >
+              <Icon name="LogIn" className="mr-2 h-4 w-4" />
+              Вход
+            </Button>
+          )}
 
-        <Button variant="ghost" size="icon" className="md:hidden">
-          <Icon name="Menu" className="h-6 w-6" />
-        </Button>
+          <Button variant="ghost" size="icon" className="md:hidden">
+            <Icon name="Menu" className="h-6 w-6" />
+          </Button>
+        </div>
       </div>
     </header>
   )

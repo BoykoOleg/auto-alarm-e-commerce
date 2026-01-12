@@ -1,0 +1,36 @@
+{
+  "tests": [
+    {
+      "name": "OPTIONS request for CORS",
+      "method": "OPTIONS",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedHeaders": {
+        "Access-Control-Allow-Origin": "*"
+      }
+    },
+    {
+      "name": "Register new user",
+      "method": "POST",
+      "path": "/",
+      "body": {
+        "action": "register",
+        "email": "test@example.com",
+        "password": "test123456",
+        "name": "Test User",
+        "phone": "+79991234567",
+        "company_name": "Test Company"
+      },
+      "expectedStatus": 200,
+      "expectedBody": {
+        "success": true,
+        "token": "string",
+        "user": {
+          "email": "test@example.com",
+          "name": "Test User"
+        }
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}
