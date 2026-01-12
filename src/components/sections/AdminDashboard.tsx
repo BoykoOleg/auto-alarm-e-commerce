@@ -185,7 +185,7 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
           </div>
         </div>
 
-        <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mb-8">
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -255,9 +255,21 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
 
         <Tabs defaultValue="requests" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="requests">Все заявки ({requests.length})</TabsTrigger>
-            <TabsTrigger value="works">Завершённые работы ({works.length})</TabsTrigger>
-            <TabsTrigger value="partners">Партнёры ({stats.totalPartners})</TabsTrigger>
+            <TabsTrigger value="requests" className="text-xs md:text-sm">
+              <span className="hidden sm:inline">Все заявки</span>
+              <span className="sm:hidden">Заявки</span>
+              <span className="ml-1">({requests.length})</span>
+            </TabsTrigger>
+            <TabsTrigger value="works" className="text-xs md:text-sm">
+              <span className="hidden sm:inline">Завершённые работы</span>
+              <span className="sm:hidden">Работы</span>
+              <span className="ml-1">({works.length})</span>
+            </TabsTrigger>
+            <TabsTrigger value="partners" className="text-xs md:text-sm">
+              <span className="hidden sm:inline">Партнёры</span>
+              <span className="sm:hidden">Партн.</span>
+              <span className="ml-1">({stats.totalPartners})</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="requests">
@@ -323,12 +335,12 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
                                 <span>{new Date(request.created_at).toLocaleString('ru-RU')}</span>
                               </div>
 
-                              <div className="pt-3 border-t flex gap-2">
+                              <div className="pt-3 border-t flex flex-col sm:flex-row gap-2">
                                 <Select
                                   value={request.status}
                                   onValueChange={(value) => handleUpdateStatus(request.id, value)}
                                 >
-                                  <SelectTrigger className="w-[180px]">
+                                  <SelectTrigger className="w-full sm:w-[180px]">
                                     <SelectValue />
                                   </SelectTrigger>
                                   <SelectContent>
@@ -342,10 +354,12 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
                                 {request.status === 'in_progress' && (
                                   <Button
                                     size="sm"
+                                    className="w-full sm:w-auto"
                                     onClick={() => setSelectedRequest(request)}
                                   >
                                     <Icon name="CheckCircle" className="mr-2 h-4 w-4" />
-                                    Завершить работу
+                                    <span className="hidden sm:inline">Завершить работу</span>
+                                    <span className="sm:hidden">Завершить</span>
                                   </Button>
                                 )}
                               </div>
@@ -360,10 +374,10 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
             </Card>
 
             {selectedRequest && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-                <Card className="max-w-md w-full">
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
+                <Card className="max-w-md w-full my-8">
                   <CardHeader>
-                    <CardTitle>Завершить работу</CardTitle>
+                    <CardTitle className="text-lg md:text-xl">Завершить работу</CardTitle>
                     <CardDescription>
                       {selectedRequest.car_brand} {selectedRequest.car_model}
                     </CardDescription>
@@ -402,7 +416,7 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
                           required
                         />
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-2">
                         <Button type="submit" className="flex-1">
                           <Icon name="Save" className="mr-2 h-4 w-4" />
                           Завершить
@@ -410,6 +424,7 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
                         <Button
                           type="button"
                           variant="outline"
+                          className="sm:w-auto"
                           onClick={() => setSelectedRequest(null)}
                         >
                           Отмена
@@ -449,9 +464,9 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
                       return (
                         <Card key={work.id} className="border">
                           <CardContent className="pt-4">
-                            <div className="flex justify-between items-start">
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
                               <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
+                                <div className="flex items-center gap-2 mb-1 flex-wrap">
                                   <p className="font-semibold">
                                     {request?.car_brand} {request?.car_model}
                                   </p>
@@ -469,7 +484,7 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
                                   Партнёр: {partner?.name || 'Неизвестно'}
                                   {partner?.company_name && ` (${partner.company_name})`}
                                 </p>
-                                <div className="flex gap-4 text-sm">
+                                <div className="flex flex-wrap gap-3 text-sm">
                                   <span className="text-muted-foreground">
                                     Стоимость: <strong>{work.work_cost.toLocaleString()} ₽</strong>
                                   </span>
@@ -484,6 +499,7 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
                               {!work.is_bonus_paid && (
                                 <Button
                                   size="sm"
+                                  className="w-full sm:w-auto"
                                   onClick={() => handlePayBonus(work.id)}
                                 >
                                   <Icon name="DollarSign" className="mr-2 h-4 w-4" />
@@ -528,24 +544,24 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
                       return (
                         <Card key={user.id} className="border">
                           <CardContent className="pt-4">
-                            <div className="flex justify-between items-start">
-                              <div>
+                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
+                              <div className="flex-1">
                                 <p className="font-semibold text-lg">{user.name}</p>
                                 {user.company_name && (
                                   <p className="text-sm text-muted-foreground">{user.company_name}</p>
                                 )}
-                                <div className="flex gap-4 text-sm mt-2">
+                                <div className="flex flex-col sm:flex-row sm:gap-4 gap-1 text-sm mt-2">
                                   <span className="text-muted-foreground">
                                     <Icon name="Phone" className="h-3 w-3 inline mr-1" />
                                     {user.phone}
                                   </span>
-                                  <span className="text-muted-foreground">
+                                  <span className="text-muted-foreground break-all">
                                     <Icon name="Mail" className="h-3 w-3 inline mr-1" />
                                     {user.email}
                                   </span>
                                 </div>
                               </div>
-                              <div className="text-right">
+                              <div className="text-right mt-3 sm:mt-0">
                                 <p className="text-2xl font-bold text-primary">{user.bonus_balance}</p>
                                 <p className="text-xs text-muted-foreground">бонусов</p>
                                 <div className="flex gap-3 text-xs text-muted-foreground mt-2">

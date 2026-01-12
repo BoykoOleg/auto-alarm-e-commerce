@@ -9,8 +9,8 @@ export const Footer = ({ setActiveSection }: FooterProps) => {
   return (
     <footer className="border-t bg-muted/30 py-12">
       <div className="container px-4">
-        <div className="grid md:grid-cols-4 gap-8 mb-8">
-          <div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+          <div className="sm:col-span-2 md:col-span-1">
             <div className="flex items-center gap-2 mb-4">
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
                 <Icon name="Shield" className="h-6 w-6 text-primary-foreground" />

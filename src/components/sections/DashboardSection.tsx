@@ -219,9 +219,19 @@ export const DashboardSection = ({ setActiveSection, userData, onLogout }: Dashb
 
         <Tabs defaultValue="new-request" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="new-request">Новая заявка</TabsTrigger>
-            <TabsTrigger value="requests">Мои заявки ({requests.length})</TabsTrigger>
-            <TabsTrigger value="history">История и бонусы</TabsTrigger>
+            <TabsTrigger value="new-request" className="text-xs md:text-sm">
+              <span className="hidden sm:inline">Новая заявка</span>
+              <span className="sm:hidden">Новая</span>
+            </TabsTrigger>
+            <TabsTrigger value="requests" className="text-xs md:text-sm">
+              <span className="hidden sm:inline">Мои заявки</span>
+              <span className="sm:hidden">Заявки</span>
+              <span className="ml-1">({requests.length})</span>
+            </TabsTrigger>
+            <TabsTrigger value="history" className="text-xs md:text-sm">
+              <span className="hidden sm:inline">История и бонусы</span>
+              <span className="sm:hidden">История</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="new-request">
@@ -237,7 +247,7 @@ export const DashboardSection = ({ setActiveSection, userData, onLogout }: Dashb
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSubmitRequest} className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-4">
+                  <div className="grid sm:grid-cols-2 gap-4">
                     <div className="space-y-4">
                       <h3 className="font-semibold">Данные клиента</h3>
                       <div>
