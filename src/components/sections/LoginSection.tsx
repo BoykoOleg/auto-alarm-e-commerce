@@ -29,7 +29,7 @@ export const LoginSection = ({ setActiveSection, onLoginSuccess }: LoginSectionP
     }
 
     try {
-      const response = await fetch('https://functions.poehali.dev/auth-api-url', {
+      const response = await fetch('https://functions.poehali.dev/aa3aea15-0141-490d-aa72-389642c2efc3', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
