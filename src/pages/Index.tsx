@@ -179,7 +179,7 @@ const Index = () => {
 
           <Button className="hidden md:flex">
             <Icon name="Phone" className="mr-2 h-4 w-4" />
-            8 (800) 555-35-35
+            +7 (901) 911-12-51
           </Button>
 
           <Button variant="ghost" size="icon" className="md:hidden">
@@ -1007,10 +1007,8 @@ const Index = () => {
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <p className="text-lg font-semibold">8 (800) 555-35-35</p>
-                        <p className="text-sm text-muted-foreground">Бесплатно по России</p>
-                        <p className="text-lg font-semibold mt-2">8 (495) 123-45-67</p>
-                        <p className="text-sm text-muted-foreground">Москва</p>
+                        <p className="text-lg font-semibold">+7 (901) 911-12-51</p>
+                        <p className="text-sm text-muted-foreground">Красноярск</p>
                       </CardContent>
                     </Card>
 
@@ -1035,7 +1033,7 @@ const Index = () => {
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
-                        <p className="text-lg">г. Москва, ул. Автомобильная, 123</p>
+                        <p className="text-lg">г. Красноярск, ул. Дудинская, 3 стр.2</p>
                         <p className="text-sm text-muted-foreground">Пн-Пт: 9:00 - 20:00</p>
                         <p className="text-sm text-muted-foreground">Сб-Вс: 10:00 - 18:00</p>
                       </CardContent>
