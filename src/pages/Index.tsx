@@ -54,6 +54,7 @@ const Index = () => {
       price: "32 000 ₽",
       description: "Автономный подогреватель двигателя",
       features: ["Таймер", "GSM", "Дистанционный запуск"],
+      popular: true,
     },
     {
       id: 4,
