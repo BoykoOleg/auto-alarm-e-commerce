@@ -1,0 +1,6 @@
+-- Обновляем пароль админа на тестовый "admin123"
+-- SHA256("admin123") = 240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9
+
+UPDATE users 
+SET password_hash = '240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9'
+WHERE email = 'admin@divisionauto.ru';

@@ -10,24 +10,22 @@
       }
     },
     {
-      "name": "Register new user",
+      "name": "Login as admin",
       "method": "POST",
       "path": "/",
       "body": {
-        "action": "register",
-        "email": "test@example.com",
-        "password": "test123456",
-        "name": "Test User",
-        "phone": "+79991234567",
-        "company_name": "Test Company"
+        "action": "login",
+        "email": "admin@divisionauto.ru",
+        "password": "admin123"
       },
       "expectedStatus": 200,
       "expectedBody": {
         "success": true,
         "token": "string",
         "user": {
-          "email": "test@example.com",
-          "name": "Test User"
+          "email": "admin@divisionauto.ru",
+          "name": "Admin",
+          "user_role": "admin"
         }
       },
       "bodyMatcher": "partial"
