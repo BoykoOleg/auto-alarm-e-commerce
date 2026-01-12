@@ -171,6 +171,91 @@ export const HomeSection = ({ setActiveSection }: HomeSectionProps) => {
           </div>
         </div>
       </section>
+
+      <section className="py-16 md:py-24 bg-muted/30">
+        <div className="container px-4">
+          <div className="text-center mb-12">
+            <Badge className="mb-4">🚗 Наши работы</Badge>
+            <h2 className="font-heading text-3xl font-bold mb-4">Примеры русификации</h2>
+            <p className="text-muted-foreground max-w-2xl mx-auto">
+              Реальные результаты работы с популярными моделями автомобилей
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
+            <Card className="overflow-hidden group hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+              <div className="relative h-56 overflow-hidden">
+                <img 
+                  src="https://cdn.poehali.dev/projects/c4b0cb42-73ec-4bbe-92b0-d10bcd013982/files/9071c9f3-4636-4500-af99-f9377ccb5048.jpg"
+                  alt="Русификация Toyota RAV4"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                <div className="absolute bottom-4 left-4 right-4">
+                  <Badge className="mb-2 bg-primary">Toyota RAV4</Badge>
+                  <p className="text-white font-semibold text-sm">Полная русификация мультимедиа</p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="overflow-hidden group hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+              <div className="relative h-56 overflow-hidden">
+                <img 
+                  src="https://cdn.poehali.dev/projects/c4b0cb42-73ec-4bbe-92b0-d10bcd013982/files/dc7f5db4-e9da-49a0-a7ea-709748a86cae.jpg"
+                  alt="Русификация Toyota Highlander"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                <div className="absolute bottom-4 left-4 right-4">
+                  <Badge className="mb-2 bg-primary">Toyota Highlander</Badge>
+                  <p className="text-white font-semibold text-sm">Премиум система на русском</p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="overflow-hidden group hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+              <div className="relative h-56 overflow-hidden">
+                <img 
+                  src="https://cdn.poehali.dev/projects/c4b0cb42-73ec-4bbe-92b0-d10bcd013982/files/49027616-6207-4788-8b3c-d02ed3e5c9ae.jpg"
+                  alt="Русификация Toyota Camry 80"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                <div className="absolute bottom-4 left-4 right-4">
+                  <Badge className="mb-2 bg-primary">Toyota Camry 80</Badge>
+                  <p className="text-white font-semibold text-sm">Цифровая панель + навигация</p>
+                </div>
+              </div>
+            </Card>
+
+            <Card className="overflow-hidden group hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+              <div className="relative h-56 overflow-hidden">
+                <img 
+                  src="https://cdn.poehali.dev/projects/c4b0cb42-73ec-4bbe-92b0-d10bcd013982/files/54094f4e-a994-49c4-8aa8-33903fc3fd05.jpg"
+                  alt="Русификация Li Auto"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent" />
+                <div className="absolute bottom-4 left-4 right-4">
+                  <Badge className="mb-2 bg-primary">Li Auto L9</Badge>
+                  <p className="text-white font-semibold text-sm">Китайские модели - русский язык</p>
+                </div>
+              </div>
+            </Card>
+          </div>
+
+          <div className="text-center mt-10">
+            <Button 
+              size="lg" 
+              variant="outline"
+              onClick={() => setActiveSection('russification')}
+            >
+              <Icon name="Images" className="mr-2 h-5 w-5" />
+              Посмотреть все работы
+            </Button>
+          </div>
+        </div>
+      </section>
     </>
   )
 }
