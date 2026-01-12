@@ -22,6 +22,7 @@ export const DashboardSection = ({ setActiveSection, userData, onLogout }: Dashb
   const [works, setWorks] = useState<any[]>([])
   const [bonusHistory, setBonusHistory] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [selectedServiceType, setSelectedServiceType] = useState('multimedia')
 
   useEffect(() => {
     loadDashboardData()
@@ -66,7 +67,7 @@ export const DashboardSection = ({ setActiveSection, userData, onLogout }: Dashb
       car_brand: (formElement.elements.namedItem('car-brand') as HTMLInputElement).value,
       car_model: (formElement.elements.namedItem('car-model') as HTMLInputElement).value,
       car_year: parseInt((formElement.elements.namedItem('car-year') as HTMLInputElement).value),
-      service_type: (formElement.elements.namedItem('service-type') as HTMLInputElement).value,
+      service_type: selectedServiceType,
       description: (formElement.elements.namedItem('description') as HTMLTextAreaElement).value,
     }
 
@@ -82,9 +83,12 @@ export const DashboardSection = ({ setActiveSection, userData, onLogout }: Dashb
         body: JSON.stringify(formData),
       })
 
-      if (response.ok) {
+      const result = await response.json()
+
+      if (response.ok && result.success) {
         setSubmitStatus('success')
         formElement.reset()
+        setSelectedServiceType('multimedia')
         loadDashboardData()
         
         await fetch('https://functions.poehali.dev/3ecd03ac-7f19-45a4-b1aa-563f140ea3c9', {
@@ -101,9 +105,11 @@ export const DashboardSection = ({ setActiveSection, userData, onLogout }: Dashb
           }),
         }).catch(err => console.error('Ошибка отправки в Telegram:', err))
       } else {
+        console.error('Ошибка создания заявки:', result)
         setSubmitStatus('error')
       }
     } catch (error) {
+      console.error('Ошибка отправки заявки:', error)
       setSubmitStatus('error')
     } finally {
       setIsSubmitting(false)
@@ -317,7 +323,7 @@ export const DashboardSection = ({ setActiveSection, userData, onLogout }: Dashb
 
                   <div>
                     <Label htmlFor="service-type">Тип услуги *</Label>
-                    <Select name="service-type" defaultValue="multimedia" required>
+                    <Select value={selectedServiceType} onValueChange={setSelectedServiceType}>
                       <SelectTrigger id="service-type">
                         <SelectValue />
                       </SelectTrigger>
