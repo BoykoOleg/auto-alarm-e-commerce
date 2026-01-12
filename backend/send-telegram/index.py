@@ -4,7 +4,16 @@ import urllib.request
 import urllib.parse
 
 def handler(event: dict, context) -> dict:
-    '''Отправка уведомлений о заявках в Telegram'''
+    '''Отправка уведомлений о заявках в Telegram
+    
+    Требуемые секреты:
+    - TELEGRAM_BOT_TOKEN: токен бота от @BotFather (есть: 8020100875:AAEfiupni_EUkqQlWXtJv2vgCx0yL5i8-58)
+    - TELEGRAM_CHAT_ID: ID чата для получения уведомлений
+      Как получить CHAT_ID:
+      1. Напишите боту @userinfobot в Telegram
+      2. Скопируйте ваш ID (число)
+      3. Добавьте его как секрет TELEGRAM_CHAT_ID в проекте
+    '''
     
     method = event.get('httpMethod', 'POST')
     
