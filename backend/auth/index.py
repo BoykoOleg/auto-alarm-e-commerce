@@ -125,9 +125,9 @@ def handle_register(cur, conn, body: dict) -> dict:
     password_hash = hash_password(password)
     
     cur.execute("""
-        INSERT INTO users (email, password_hash, name, phone, company_name, user_type, bonus_balance)
-        VALUES (%s, %s, %s, %s, %s, 'partner', 0)
-        RETURNING id, email, name, phone, company_name, user_type, bonus_balance
+        INSERT INTO users (email, password_hash, name, phone, company_name, user_type, user_role, bonus_balance)
+        VALUES (%s, %s, %s, %s, %s, 'partner', 'partner', 0)
+        RETURNING id, email, name, phone, company_name, user_type, user_role, bonus_balance
     """, (email, password_hash, name, phone, company_name))
     
     user = dict(cur.fetchone())
@@ -155,6 +155,7 @@ def handle_register(cur, conn, body: dict) -> dict:
                 'phone': user['phone'],
                 'company_name': user['company_name'],
                 'user_type': user['user_type'],
+                'user_role': user.get('user_role', 'partner'),
                 'bonus_balance': user['bonus_balance']
             }
         }),
@@ -177,7 +178,7 @@ def handle_login(cur, conn, body: dict) -> dict:
     password_hash = hash_password(password)
     
     cur.execute("""
-        SELECT id, email, name, phone, company_name, user_type, bonus_balance
+        SELECT id, email, name, phone, company_name, user_type, user_role, bonus_balance
         FROM users
         WHERE email = %s AND password_hash = %s
     """, (email, password_hash))
@@ -216,6 +217,7 @@ def handle_login(cur, conn, body: dict) -> dict:
                 'phone': user['phone'],
                 'company_name': user['company_name'],
                 'user_type': user['user_type'],
+                'user_role': user.get('user_role', 'partner'),
                 'bonus_balance': user['bonus_balance']
             }
         }),
@@ -233,7 +235,7 @@ def handle_verify(cur, token: str) -> dict:
         }
     
     cur.execute("""
-        SELECT u.id, u.email, u.name, u.phone, u.company_name, u.user_type, u.bonus_balance
+        SELECT u.id, u.email, u.name, u.phone, u.company_name, u.user_type, u.user_role, u.bonus_balance
         FROM user_sessions s
         JOIN users u ON s.user_id = u.id
         WHERE s.session_token = %s AND s.expires_at > NOW()
@@ -263,6 +265,7 @@ def handle_verify(cur, token: str) -> dict:
                 'phone': user['phone'],
                 'company_name': user['company_name'],
                 'user_type': user['user_type'],
+                'user_role': user.get('user_role', 'partner'),
                 'bonus_balance': user['bonus_balance']
             }
         }),

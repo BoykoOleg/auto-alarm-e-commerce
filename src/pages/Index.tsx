@@ -5,6 +5,7 @@ import { MainSections } from "@/components/sections/MainSections";
 import { Footer } from "@/components/sections/Footer";
 import { LoginSection } from "@/components/sections/LoginSection";
 import { DashboardSection } from "@/components/sections/DashboardSection";
+import { AdminDashboard } from "@/components/sections/AdminDashboard";
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState("home");
@@ -159,7 +160,14 @@ const Index = () => {
           />
         )}
 
-        {activeSection === "dashboard" && isAuthenticated && (
+        {activeSection === "dashboard" && isAuthenticated && userData?.user_role === 'admin' && (
+          <AdminDashboard 
+            setActiveSection={setActiveSection}
+            onLogout={handleLogout}
+          />
+        )}
+
+        {activeSection === "dashboard" && isAuthenticated && userData?.user_role !== 'admin' && (
           <DashboardSection 
             setActiveSection={setActiveSection}
             userData={userData}

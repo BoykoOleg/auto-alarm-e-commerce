@@ -86,6 +86,20 @@ export const DashboardSection = ({ setActiveSection, userData, onLogout }: Dashb
         setSubmitStatus('success')
         formElement.reset()
         loadDashboardData()
+        
+        await fetch('https://functions.poehali.dev/3ecd03ac-7f19-45a4-b1aa-563f140ea3c9', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: userData?.name || 'Партнёр',
+            phone: formData.client_phone,
+            car: `${formData.car_brand} ${formData.car_model} ${formData.car_year}`,
+            message: `Тип услуги: ${formData.service_type}. ${formData.description || 'Без комментария'}`,
+            type: 'Заявка от партнёра',
+          }),
+        }).catch(err => console.error('Ошибка отправки в Telegram:', err))
       } else {
         setSubmitStatus('error')
       }
