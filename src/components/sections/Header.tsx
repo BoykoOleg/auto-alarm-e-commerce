@@ -34,7 +34,7 @@ export const Header = ({
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
             <Icon name="Shield" className="h-6 w-6 text-primary-foreground" />
           </div>
-          <span className="font-heading text-xl font-bold">SmartLine</span>
+          <span className="font-heading text-xl font-bold">DivisionAuto</span>
         </div>
 
         <nav className="hidden md:flex items-center gap-6">
