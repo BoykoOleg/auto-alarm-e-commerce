@@ -176,6 +176,12 @@ export const LoginSection = ({ setActiveSection, onLoginSuccess }: LoginSectionP
                       <Icon name="LogIn" className="mr-2 h-4 w-4" />
                       {isSubmitting ? 'Вход...' : 'Войти'}
                     </Button>
+
+                    <div className="text-center text-sm">
+                      <a href="/forgot-password" className="text-primary hover:underline">
+                        Забыли пароль?
+                      </a>
+                    </div>
                   </form>
                 </CardContent>
               </Card>
