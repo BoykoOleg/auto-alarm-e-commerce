@@ -36,13 +36,13 @@ const ForgotPassword = () => {
       if (response.ok) {
         setIsSuccess(true);
         toast({
-          title: "Письмо отправлено",
-          description: "Проверьте вашу почту для восстановления пароля",
+          title: "Код отправлен",
+          description: "Запрос отправлен администратору в Telegram",
         });
       } else {
         toast({
           title: "Ошибка",
-          description: data.error || "Не удалось отправить письмо",
+          description: data.error || "Не удалось отправить запрос",
           variant: "destructive",
         });
       }
@@ -64,10 +64,10 @@ const ForgotPassword = () => {
           <div className="mb-6">
             <Icon name="CheckCircle" size={64} className="mx-auto text-green-500" />
           </div>
-          <h1 className="text-2xl font-bold mb-4">Письмо отправлено</h1>
+          <h1 className="text-2xl font-bold mb-4">Запрос отправлен</h1>
           <p className="text-gray-600 mb-6">
-            Если этот email зарегистрирован в системе, вы получите письмо с
-            инструкциями по восстановлению пароля.
+            Код восстановления отправлен администратору в Telegram. 
+            Свяжитесь с поддержкой для получения кода.
           </p>
           <Link to="/">
             <Button className="w-full">Вернуться на главную</Button>
@@ -84,7 +84,7 @@ const ForgotPassword = () => {
           <Icon name="KeyRound" size={48} className="mx-auto mb-4 text-blue-600" />
           <h1 className="text-3xl font-bold mb-2">Восстановление пароля</h1>
           <p className="text-gray-600">
-            Введите email, и мы отправим инструкции по восстановлению
+            Введите email - код восстановления будет отправлен администратору
           </p>
         </div>
 
@@ -111,7 +111,7 @@ const ForgotPassword = () => {
             ) : (
               <>
                 <Icon name="Send" size={16} className="mr-2" />
-                Отправить письмо
+                Запросить код
               </>
             )}
           </Button>

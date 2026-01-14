@@ -1,9 +1,7 @@
 import json
 import os
 import secrets
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+import requests
 from datetime import datetime, timedelta
 import hashlib
 import psycopg2
@@ -67,7 +65,7 @@ def handler(event: dict, context) -> dict:
 
 
 def handle_request(data: dict) -> dict:
-    '''Отправка письма для восстановления пароля'''
+    '''Отправка кода восстановления через Telegram'''
     
     email = data.get('email', '').strip().lower()
     
@@ -84,7 +82,7 @@ def handle_request(data: dict) -> dict:
     cur = conn.cursor()
     
     email_escaped = email.replace("'", "''")
-    cur.execute(f"SELECT id, email FROM users WHERE email = '{email_escaped}'")
+    cur.execute(f"SELECT id, email, name FROM users WHERE email = '{email_escaped}'")
     user = cur.fetchone()
     
     if not user:
@@ -93,52 +91,46 @@ def handle_request(data: dict) -> dict:
         return {
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'message': 'Если email существует, письмо отправлено'}),
+            'body': json.dumps({'message': 'Если email существует, код отправлен'}),
             'isBase64Encoded': False
         }
     
-    user_id, user_email = user
+    user_id, user_email, user_name = user
     
-    token = secrets.token_urlsafe(32)
-    expires_at = datetime.now() + timedelta(hours=1)
+    code = ''.join([str(secrets.randbelow(10)) for _ in range(6)])
+    expires_at = datetime.now() + timedelta(minutes=15)
     
     cur.execute(
-        f"INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES ({user_id}, '{token}', '{expires_at.isoformat()}')"
+        f"INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES ({user_id}, '{code}', '{expires_at.isoformat()}')"
     )
     conn.commit()
     
-    site_url = os.environ.get('SITE_URL', 'https://yoursite.com')
-    reset_link = f"{site_url}/reset-password?token={token}"
+    bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
+    chat_id = os.environ.get('TELEGRAM_CHAT_ID')
     
-    smtp_host = os.environ.get('SMTP_HOST')
-    smtp_port = int(os.environ.get('SMTP_PORT', '465'))
-    smtp_user = os.environ.get('SMTP_USER')
-    smtp_password = os.environ.get('SMTP_PASSWORD')
-    
-    msg = MIMEMultipart('alternative')
-    msg['Subject'] = 'Восстановление пароля'
-    msg['From'] = smtp_user
-    msg['To'] = user_email
-    
-    html = f"""
-    <html>
-        <body>
-            <h2>Восстановление пароля</h2>
-            <p>Вы запросили восстановление пароля.</p>
-            <p>Перейдите по ссылке для установки нового пароля:</p>
-            <p><a href="{reset_link}">{reset_link}</a></p>
-            <p>Ссылка действительна 1 час.</p>
-            <p>Если вы не запрашивали восстановление пароля, проигнорируйте это письмо.</p>
-        </body>
-    </html>
-    """
-    
-    part = MIMEText(html, 'html')
-    msg.attach(part)
-    
-    with smtplib.SMTP_SSL(smtp_host, smtp_port) as server:
-        server.login(smtp_user, smtp_password)
-        server.send_message(msg)
+    if bot_token and chat_id:
+        message = f"""🔐 <b>Восстановление пароля</b>
+
+👤 Пользователь: {user_name}
+📧 Email: {user_email}
+
+<b>Код восстановления: {code}</b>
+
+⏰ Действителен 15 минут
+🔒 Если это не вы, проигнорируйте сообщение"""
+        
+        try:
+            requests.post(
+                f'https://api.telegram.org/bot{bot_token}/sendMessage',
+                json={
+                    'chat_id': chat_id,
+                    'text': message,
+                    'parse_mode': 'HTML'
+                },
+                timeout=5
+            )
+        except:
+            pass
     
     cur.close()
     conn.close()
@@ -146,22 +138,22 @@ def handle_request(data: dict) -> dict:
     return {
         'statusCode': 200,
         'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-        'body': json.dumps({'message': 'Если email существует, письмо отправлено'}),
+        'body': json.dumps({'message': 'Код восстановления отправлен администратору'}),
         'isBase64Encoded': False
     }
 
 
 def handle_confirm(data: dict) -> dict:
-    '''Установка нового пароля по токену'''
+    '''Установка нового пароля по коду'''
     
-    token = data.get('token', '').strip()
+    code = data.get('code', '').strip()
     new_password = data.get('password', '').strip()
     
-    if not token or not new_password:
+    if not code or not new_password:
         return {
             'statusCode': 400,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'Токен и пароль обязательны'}),
+            'body': json.dumps({'error': 'Код и пароль обязательны'}),
             'isBase64Encoded': False
         }
     
@@ -177,9 +169,9 @@ def handle_confirm(data: dict) -> dict:
     conn = psycopg2.connect(dsn)
     cur = conn.cursor()
     
-    token_escaped = token.replace("'", "''")
+    code_escaped = code.replace("'", "''")
     cur.execute(
-        f"SELECT user_id, expires_at, used FROM password_reset_tokens WHERE token = '{token_escaped}'"
+        f"SELECT user_id, expires_at, used FROM password_reset_tokens WHERE token = '{code_escaped}'"
     )
     token_data = cur.fetchone()
     
@@ -189,7 +181,7 @@ def handle_confirm(data: dict) -> dict:
         return {
             'statusCode': 400,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'Неверный токен'}),
+            'body': json.dumps({'error': 'Неверный код'}),
             'isBase64Encoded': False
         }
     
@@ -201,7 +193,7 @@ def handle_confirm(data: dict) -> dict:
         return {
             'statusCode': 400,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'Токен уже использован'}),
+            'body': json.dumps({'error': 'Код уже использован'}),
             'isBase64Encoded': False
         }
     
@@ -211,7 +203,7 @@ def handle_confirm(data: dict) -> dict:
         return {
             'statusCode': 400,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'Токен истек'}),
+            'body': json.dumps({'error': 'Код истек'}),
             'isBase64Encoded': False
         }
     
@@ -223,7 +215,7 @@ def handle_confirm(data: dict) -> dict:
     )
     
     cur.execute(
-        f"UPDATE password_reset_tokens SET used = TRUE WHERE token = '{token_escaped}'"
+        f"UPDATE password_reset_tokens SET used = TRUE WHERE token = '{code_escaped}'"
     )
     
     conn.commit()
