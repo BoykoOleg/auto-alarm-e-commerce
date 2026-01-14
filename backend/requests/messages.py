@@ -2,6 +2,7 @@ import json
 import os
 import base64
 import boto3
+import requests
 from datetime import datetime
 
 
@@ -111,6 +112,8 @@ def handle_send_message(cur, conn, request_id: int, user_id: int, data: dict) ->
     result = cur.fetchone()
     conn.commit()
     
+    send_telegram_notification(cur, request_id, user_id, message_text, file_name)
+    
     return {
         'statusCode': 200,
         'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
@@ -148,3 +151,59 @@ def upload_file_to_s3(base64_content: str, file_name: str, file_type: str) -> tu
     cdn_url = f"https://cdn.poehali.dev/projects/{os.environ['AWS_ACCESS_KEY_ID']}/bucket/{safe_filename}"
     
     return cdn_url, file_name, file_type
+
+
+def send_telegram_notification(cur, request_id: int, user_id: int, message_text: str, file_name: str = None):
+    '''Отправить уведомление в Telegram при новом сообщении от клиента'''
+    
+    bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
+    chat_id = os.environ.get('TELEGRAM_CHAT_ID')
+    
+    if not bot_token or not chat_id:
+        return
+    
+    try:
+        cur.execute("""
+            SELECT u.name, u.phone, u.company_name,
+                   r.car_brand, r.car_model, r.car_year, r.client_name
+            FROM russification_requests r
+            JOIN users u ON r.user_id = u.id
+            WHERE r.id = %s
+        """, (request_id,))
+        
+        data = cur.fetchone()
+        if not data:
+            return
+        
+        partner_name = data['name']
+        partner_phone = data['phone']
+        company_name = data['company_name'] or ''
+        car_info = f"{data['car_brand']} {data['car_model']} ({data['car_year']})"
+        client_name = data['client_name']
+        
+        notification = f"""💬 <b>Новое сообщение от клиента</b>
+
+📝 Заявка #{request_id}
+🚗 Автомобиль: {car_info}
+👤 Клиент: {client_name}
+
+👨‍💼 Партнёр: {partner_name}
+{f'🏢 {company_name}' if company_name else ''}
+📞 {partner_phone}
+
+💭 Сообщение: {message_text or '(файл без текста)'}"""
+        
+        if file_name:
+            notification += f"\n📎 Файл: {file_name}"
+        
+        requests.post(
+            f'https://api.telegram.org/bot{bot_token}/sendMessage',
+            json={
+                'chat_id': chat_id,
+                'text': notification,
+                'parse_mode': 'HTML'
+            },
+            timeout=5
+        )
+    except:
+        pass
