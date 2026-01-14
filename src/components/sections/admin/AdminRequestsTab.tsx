@@ -5,7 +5,9 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import Icon from '@/components/ui/icon'
+import { AdminRequestChat } from '@/components/AdminRequestChat'
 
 interface AdminRequestsTabProps {
   requests: any[]
@@ -23,6 +25,7 @@ export const AdminRequestsTab = ({
   onCompleteWork 
 }: AdminRequestsTabProps) => {
   const [selectedRequest, setSelectedRequest] = useState<any>(null)
+  const [chatRequestId, setChatRequestId] = useState<number | null>(null)
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
@@ -119,33 +122,44 @@ export const AdminRequestsTab = ({
                           <span>{new Date(request.created_at).toLocaleString('ru-RU')}</span>
                         </div>
 
-                        <div className="pt-3 border-t flex flex-col sm:flex-row gap-2">
-                          <Select
-                            value={request.status}
-                            onValueChange={(value) => onUpdateStatus(request.id, value)}
-                          >
-                            <SelectTrigger className="w-full sm:w-[180px]">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="pending">Новая</SelectItem>
-                              <SelectItem value="in_progress">В работе</SelectItem>
-                              <SelectItem value="completed">Завершено</SelectItem>
-                              <SelectItem value="cancelled">Отменено</SelectItem>
-                            </SelectContent>
-                          </Select>
-
-                          {request.status === 'in_progress' && (
-                            <Button
-                              size="sm"
-                              className="w-full sm:w-auto"
-                              onClick={() => setSelectedRequest(request)}
+                        <div className="pt-3 border-t space-y-2">
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <Select
+                              value={request.status}
+                              onValueChange={(value) => onUpdateStatus(request.id, value)}
                             >
-                              <Icon name="CheckCircle" className="mr-2 h-4 w-4" />
-                              <span className="hidden sm:inline">Завершить работу</span>
-                              <span className="sm:hidden">Завершить</span>
-                            </Button>
-                          )}
+                              <SelectTrigger className="w-full sm:w-[180px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pending">Новая</SelectItem>
+                                <SelectItem value="in_progress">В работе</SelectItem>
+                                <SelectItem value="completed">Завершено</SelectItem>
+                                <SelectItem value="cancelled">Отменено</SelectItem>
+                              </SelectContent>
+                            </Select>
+
+                            {request.status === 'in_progress' && (
+                              <Button
+                                size="sm"
+                                className="w-full sm:w-auto"
+                                onClick={() => setSelectedRequest(request)}
+                              >
+                                <Icon name="CheckCircle" className="mr-2 h-4 w-4" />
+                                <span className="hidden sm:inline">Завершить работу</span>
+                                <span className="sm:hidden">Завершить</span>
+                              </Button>
+                            )}
+                          </div>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                            onClick={() => setChatRequestId(request.id)}
+                          >
+                            <Icon name="MessageCircle" className="mr-2 h-4 w-4" />
+                            Открыть переписку
+                          </Button>
                         </div>
                       </div>
                     </CardContent>
@@ -210,6 +224,15 @@ export const AdminRequestsTab = ({
           </Card>
         </div>
       )}
+
+      <Dialog open={chatRequestId !== null} onOpenChange={(open) => !open && setChatRequestId(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>Переписка по заявке #{chatRequestId}</DialogTitle>
+          </DialogHeader>
+          {chatRequestId && <AdminRequestChat requestId={chatRequestId} />}
+        </DialogContent>
+      </Dialog>
     </>
   )
 }

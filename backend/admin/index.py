@@ -17,6 +17,7 @@ def handler(event: dict, context) -> dict:
     '''
     
     method = event.get('httpMethod', 'GET')
+    query_params = event.get('queryStringParameters', {})
     
     if method == 'GET' and event.get('queryStringParameters', {}).get('debug_secrets') == '1':
         secrets = {
@@ -88,8 +89,18 @@ def handler(event: dict, context) -> dict:
                 'isBase64Encoded': False
             }
         
-        if method == 'GET':
+        request_id = query_params.get('request_id')
+        action = query_params.get('action')
+        
+        if method == 'GET' and action == 'messages' and request_id:
+            from messages import handle_get_admin_messages
+            return handle_get_admin_messages(cur, int(request_id))
+        elif method == 'GET':
             return handle_get_all_data(cur)
+        elif method == 'POST' and action == 'send_message' and request_id:
+            from messages import handle_send_admin_message
+            body = json.loads(event.get('body', '{}'))
+            return handle_send_admin_message(cur, conn, int(request_id), body)
         elif method == 'POST':
             body = json.loads(event.get('body', '{}'))
             action = body.get('action', '')
