@@ -1,12 +1,11 @@
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import Icon from '@/components/ui/icon'
+import { AdminStatsCards } from './admin/AdminStatsCards'
+import { AdminRequestsTab } from './admin/AdminRequestsTab'
+import { AdminWorksTab } from './admin/AdminWorksTab'
+import { AdminPartnersTab } from './admin/AdminPartnersTab'
 
 interface AdminDashboardProps {
   setActiveSection: (section: string) => void
@@ -18,7 +17,6 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
   const [users, setUsers] = useState<any[]>([])
   const [works, setWorks] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [selectedRequest, setSelectedRequest] = useState<any>(null)
 
   useEffect(() => {
     loadAdminData()
@@ -94,7 +92,6 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
       })
 
       if (response.ok) {
-        setSelectedRequest(null)
         loadAdminData()
       }
     } catch (error) {
@@ -124,28 +121,6 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
     } catch (error) {
       console.error('Ошибка выплаты бонуса:', error)
     }
-  }
-
-  const getStatusBadge = (status: string) => {
-    const statusMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
-      pending: { label: 'Новая', variant: 'secondary' },
-      in_progress: { label: 'В работе', variant: 'default' },
-      completed: { label: 'Завершено', variant: 'outline' },
-      cancelled: { label: 'Отменено', variant: 'destructive' },
-    }
-    const statusInfo = statusMap[status] || statusMap.pending
-    return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
-  }
-
-  const getServiceTypeName = (type: string) => {
-    const types: Record<string, string> = {
-      multimedia: 'Мультимедиа',
-      dashboard: 'Бортовой компьютер',
-      navigation: 'Навигация',
-      climate: 'Климат-контроль',
-      full: 'Полная русификация',
-    }
-    return types[type] || type
   }
 
   const stats = {
@@ -185,73 +160,7 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
           </div>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mb-8">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Всего заявок
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">{stats.totalRequests}</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Новых
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-blue-600">{stats.pendingRequests}</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                В работе
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-orange-600">{stats.inProgressRequests}</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Завершено
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-green-600">{stats.completedWorks}</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Невыплачено
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold text-red-600">{stats.unpaidBonuses}</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Партнёров
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-2xl font-bold">{stats.totalPartners}</p>
-            </CardContent>
-          </Card>
-        </div>
+        <AdminStatsCards stats={stats} />
 
         <Tabs defaultValue="requests" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
@@ -273,311 +182,32 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
           </TabsList>
 
           <TabsContent value="requests">
-            <Card>
-              <CardHeader>
-                <CardTitle>Управление заявками</CardTitle>
-                <CardDescription>
-                  Все заявки от партнёров на русификацию автомобилей
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="text-center py-8">
-                    <Icon name="Loader" className="h-8 w-8 animate-spin mx-auto mb-2" />
-                    <p className="text-muted-foreground">Загрузка...</p>
-                  </div>
-                ) : requests.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Icon name="FileText" className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
-                    <p className="text-muted-foreground">Нет заявок</p>
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    {requests.map((request) => {
-                      const partner = users.find(u => u.id === request.user_id)
-                      
-                      return (
-                        <Card key={request.id} className="border-2">
-                          <CardHeader className="pb-3">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-2">
-                                  <CardTitle className="text-lg">
-                                    {request.car_brand} {request.car_model} ({request.car_year})
-                                  </CardTitle>
-                                  {getStatusBadge(request.status)}
-                                </div>
-                                <CardDescription>
-                                  Клиент: {request.client_name} • {request.client_phone}
-                                  {request.client_email && ` • ${request.client_email}`}
-                                </CardDescription>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                  Партнёр: {partner?.name || 'Неизвестно'}
-                                  {partner?.company_name && ` (${partner.company_name})`}
-                                </p>
-                              </div>
-                            </div>
-                          </CardHeader>
-                          <CardContent>
-                            <div className="space-y-3">
-                              <div className="flex items-center gap-2 text-sm">
-                                <Icon name="Wrench" className="h-4 w-4 text-muted-foreground" />
-                                <span>{getServiceTypeName(request.service_type)}</span>
-                              </div>
-                              {request.description && (
-                                <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                                  <Icon name="MessageSquare" className="h-4 w-4 mt-0.5" />
-                                  <span>{request.description}</span>
-                                </div>
-                              )}
-                              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <Icon name="Calendar" className="h-4 w-4" />
-                                <span>{new Date(request.created_at).toLocaleString('ru-RU')}</span>
-                              </div>
-
-                              <div className="pt-3 border-t flex flex-col sm:flex-row gap-2">
-                                <Select
-                                  value={request.status}
-                                  onValueChange={(value) => handleUpdateStatus(request.id, value)}
-                                >
-                                  <SelectTrigger className="w-full sm:w-[180px]">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="pending">Новая</SelectItem>
-                                    <SelectItem value="in_progress">В работе</SelectItem>
-                                    <SelectItem value="completed">Завершено</SelectItem>
-                                    <SelectItem value="cancelled">Отменено</SelectItem>
-                                  </SelectContent>
-                                </Select>
-
-                                {request.status === 'in_progress' && (
-                                  <Button
-                                    size="sm"
-                                    className="w-full sm:w-auto"
-                                    onClick={() => setSelectedRequest(request)}
-                                  >
-                                    <Icon name="CheckCircle" className="mr-2 h-4 w-4" />
-                                    <span className="hidden sm:inline">Завершить работу</span>
-                                    <span className="sm:hidden">Завершить</span>
-                                  </Button>
-                                )}
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {selectedRequest && (
-              <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50 overflow-y-auto">
-                <Card className="max-w-md w-full my-8">
-                  <CardHeader>
-                    <CardTitle className="text-lg md:text-xl">Завершить работу</CardTitle>
-                    <CardDescription>
-                      {selectedRequest.car_brand} {selectedRequest.car_model}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault()
-                        const formData = new FormData(e.currentTarget)
-                        const workCost = parseFloat(formData.get('work_cost') as string)
-                        const bonusEarned = parseInt(formData.get('bonus_earned') as string)
-                        handleCompleteWork(selectedRequest.id, workCost, bonusEarned)
-                      }}
-                      className="space-y-4"
-                    >
-                      <div>
-                        <Label htmlFor="work_cost">Стоимость работы (₽)</Label>
-                        <Input
-                          id="work_cost"
-                          name="work_cost"
-                          type="number"
-                          step="0.01"
-                          min="0"
-                          placeholder="5000"
-                          required
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="bonus_earned">Бонусы партнёру</Label>
-                        <Input
-                          id="bonus_earned"
-                          name="bonus_earned"
-                          type="number"
-                          min="0"
-                          placeholder="500"
-                          required
-                        />
-                      </div>
-                      <div className="flex flex-col sm:flex-row gap-2">
-                        <Button type="submit" className="flex-1">
-                          <Icon name="Save" className="mr-2 h-4 w-4" />
-                          Завершить
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="sm:w-auto"
-                          onClick={() => setSelectedRequest(null)}
-                        >
-                          Отмена
-                        </Button>
-                      </div>
-                    </form>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
+            <AdminRequestsTab
+              requests={requests}
+              users={users}
+              isLoading={isLoading}
+              onUpdateStatus={handleUpdateStatus}
+              onCompleteWork={handleCompleteWork}
+            />
           </TabsContent>
 
           <TabsContent value="works">
-            <Card>
-              <CardHeader>
-                <CardTitle>Завершённые работы</CardTitle>
-                <CardDescription>
-                  История выполненных работ и статус выплаты бонусов
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="text-center py-8">
-                    <Icon name="Loader" className="h-8 w-8 animate-spin mx-auto" />
-                  </div>
-                ) : works.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Icon name="History" className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
-                    <p className="text-muted-foreground">Нет завершённых работ</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {works.map((work) => {
-                      const partner = users.find(u => u.id === work.user_id)
-                      const request = requests.find(r => r.id === work.request_id)
-                      
-                      return (
-                        <Card key={work.id} className="border">
-                          <CardContent className="pt-4">
-                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
-                              <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                  <p className="font-semibold">
-                                    {request?.car_brand} {request?.car_model}
-                                  </p>
-                                  {work.is_bonus_paid ? (
-                                    <Badge variant="outline" className="bg-green-50">
-                                      ✓ Выплачено
-                                    </Badge>
-                                  ) : (
-                                    <Badge variant="destructive">
-                                      Не выплачено
-                                    </Badge>
-                                  )}
-                                </div>
-                                <p className="text-sm text-muted-foreground mb-2">
-                                  Партнёр: {partner?.name || 'Неизвестно'}
-                                  {partner?.company_name && ` (${partner.company_name})`}
-                                </p>
-                                <div className="flex flex-wrap gap-3 text-sm">
-                                  <span className="text-muted-foreground">
-                                    Стоимость: <strong>{work.work_cost.toLocaleString()} ₽</strong>
-                                  </span>
-                                  <span className="text-muted-foreground">
-                                    Бонус: <strong className="text-primary">+{work.bonus_earned}</strong>
-                                  </span>
-                                  <span className="text-muted-foreground">
-                                    {new Date(work.work_date).toLocaleDateString('ru-RU')}
-                                  </span>
-                                </div>
-                              </div>
-                              {!work.is_bonus_paid && (
-                                <Button
-                                  size="sm"
-                                  className="w-full sm:w-auto"
-                                  onClick={() => handlePayBonus(work.id)}
-                                >
-                                  <Icon name="DollarSign" className="mr-2 h-4 w-4" />
-                                  Выплатить
-                                </Button>
-                              )}
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <AdminWorksTab
+              works={works}
+              users={users}
+              requests={requests}
+              isLoading={isLoading}
+              onPayBonus={handlePayBonus}
+            />
           </TabsContent>
 
           <TabsContent value="partners">
-            <Card>
-              <CardHeader>
-                <CardTitle>Партнёры</CardTitle>
-                <CardDescription>
-                  Список всех зарегистрированных партнёров
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="text-center py-8">
-                    <Icon name="Loader" className="h-8 w-8 animate-spin mx-auto" />
-                  </div>
-                ) : users.filter(u => u.user_role === 'partner').length === 0 ? (
-                  <div className="text-center py-8">
-                    <Icon name="Users" className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
-                    <p className="text-muted-foreground">Нет партнёров</p>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {users.filter(u => u.user_role === 'partner').map((user) => {
-                      const userRequests = requests.filter(r => r.user_id === user.id)
-                      const userWorks = works.filter(w => w.user_id === user.id)
-                      
-                      return (
-                        <Card key={user.id} className="border">
-                          <CardContent className="pt-4">
-                            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3">
-                              <div className="flex-1">
-                                <p className="font-semibold text-lg">{user.name}</p>
-                                {user.company_name && (
-                                  <p className="text-sm text-muted-foreground">{user.company_name}</p>
-                                )}
-                                <div className="flex flex-col sm:flex-row sm:gap-4 gap-1 text-sm mt-2">
-                                  <span className="text-muted-foreground">
-                                    <Icon name="Phone" className="h-3 w-3 inline mr-1" />
-                                    {user.phone}
-                                  </span>
-                                  <span className="text-muted-foreground break-all">
-                                    <Icon name="Mail" className="h-3 w-3 inline mr-1" />
-                                    {user.email}
-                                  </span>
-                                </div>
-                              </div>
-                              <div className="text-right mt-3 sm:mt-0">
-                                <p className="text-2xl font-bold text-primary">{user.bonus_balance}</p>
-                                <p className="text-xs text-muted-foreground">бонусов</p>
-                                <div className="flex gap-3 text-xs text-muted-foreground mt-2">
-                                  <span>Заявок: {userRequests.length}</span>
-                                  <span>Работ: {userWorks.length}</span>
-                                </div>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <AdminPartnersTab
+              users={users}
+              requests={requests}
+              works={works}
+              isLoading={isLoading}
+            />
           </TabsContent>
         </Tabs>
       </div>
