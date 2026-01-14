@@ -1,0 +1,16 @@
+{
+  "tests": [
+    {
+      "name": "Test SMTP config check",
+      "method": "GET",
+      "path": "/",
+      "expectedStatus": 200,
+      "expectedBody": {
+        "config": {
+          "SMTP_HOST": "string"
+        }
+      },
+      "bodyMatcher": "partial"
+    }
+  ]
+}

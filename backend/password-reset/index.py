@@ -83,7 +83,8 @@ def handle_request(data: dict) -> dict:
     conn = psycopg2.connect(dsn)
     cur = conn.cursor()
     
-    cur.execute("SELECT id, email FROM users WHERE email = %s", (email,))
+    email_escaped = email.replace("'", "''")
+    cur.execute(f"SELECT id, email FROM users WHERE email = '{email_escaped}'")
     user = cur.fetchone()
     
     if not user:
@@ -102,8 +103,7 @@ def handle_request(data: dict) -> dict:
     expires_at = datetime.now() + timedelta(hours=1)
     
     cur.execute(
-        "INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES (%s, %s, %s)",
-        (user_id, token, expires_at)
+        f"INSERT INTO password_reset_tokens (user_id, token, expires_at) VALUES ({user_id}, '{token}', '{expires_at.isoformat()}')"
     )
     conn.commit()
     
@@ -177,9 +177,9 @@ def handle_confirm(data: dict) -> dict:
     conn = psycopg2.connect(dsn)
     cur = conn.cursor()
     
+    token_escaped = token.replace("'", "''")
     cur.execute(
-        "SELECT user_id, expires_at, used FROM password_reset_tokens WHERE token = %s",
-        (token,)
+        f"SELECT user_id, expires_at, used FROM password_reset_tokens WHERE token = '{token_escaped}'"
     )
     token_data = cur.fetchone()
     
@@ -216,15 +216,14 @@ def handle_confirm(data: dict) -> dict:
         }
     
     password_hash = hashlib.sha256(new_password.encode()).hexdigest()
+    now = datetime.now().isoformat()
     
     cur.execute(
-        "UPDATE users SET password_hash = %s, updated_at = %s WHERE id = %s",
-        (password_hash, datetime.now(), user_id)
+        f"UPDATE users SET password_hash = '{password_hash}', updated_at = '{now}' WHERE id = {user_id}"
     )
     
     cur.execute(
-        "UPDATE password_reset_tokens SET used = TRUE WHERE token = %s",
-        (token,)
+        f"UPDATE password_reset_tokens SET used = TRUE WHERE token = '{token_escaped}'"
     )
     
     conn.commit()
