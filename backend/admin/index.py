@@ -9,6 +9,7 @@ def handler(event: dict, context) -> dict:
     
     Endpoints:
     - GET /admin - получить все данные (заявки, пользователи, работы)
+    - GET /admin?debug_secrets=1 - показать SMTP секреты для отладки
     - POST /admin - управление заявками и бонусами
       - action: update_status - изменить статус заявки
       - action: complete_work - завершить работу и начислить бонусы
@@ -16,6 +17,10 @@ def handler(event: dict, context) -> dict:
     '''
     
     method = event.get('httpMethod', 'GET')
+    
+    if method == 'GET' and event.get('queryStringParameters', {}).get('debug_secrets') == '1':
+        from debug_secrets import show_smtp_secrets
+        return show_smtp_secrets(event, context)
     
     if method == 'OPTIONS':
         return {
