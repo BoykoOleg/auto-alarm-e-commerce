@@ -19,8 +19,20 @@ def handler(event: dict, context) -> dict:
     method = event.get('httpMethod', 'GET')
     
     if method == 'GET' and event.get('queryStringParameters', {}).get('debug_secrets') == '1':
-        from debug_secrets import show_smtp_secrets
-        return show_smtp_secrets(event, context)
+        secrets = {
+            'SMTP_HOST': os.environ.get('SMTP_HOST', 'НЕ ЗАДАН'),
+            'SMTP_PORT': os.environ.get('SMTP_PORT', 'НЕ ЗАДАН'),
+            'SMTP_USER': os.environ.get('SMTP_USER', 'НЕ ЗАДАН'),
+            'SMTP_PASSWORD': os.environ.get('SMTP_PASSWORD', 'НЕ ЗАДАН'),
+            'SMTP_PASSWORD_LENGTH': len(os.environ.get('SMTP_PASSWORD', '')) if os.environ.get('SMTP_PASSWORD') else 0,
+            'SITE_URL': os.environ.get('SITE_URL', 'НЕ ЗАДАН')
+        }
+        return {
+            'statusCode': 200,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps(secrets, ensure_ascii=False),
+            'isBase64Encoded': False
+        }
     
     if method == 'OPTIONS':
         return {
