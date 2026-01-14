@@ -9,10 +9,14 @@ def handler(event: dict, context) -> dict:
     
     Endpoints:
     - GET /requests - получить все заявки, работы и историю бонусов пользователя
+    - GET /requests/:id/messages - получить сообщения по заявке
     - POST /requests - создать новую заявку
+    - POST /requests/:id/messages - отправить сообщение в чат
     '''
     
     method = event.get('httpMethod', 'GET')
+    path = event.get('pathParams', {})
+    query_params = event.get('queryStringParameters', {})
     
     if method == 'OPTIONS':
         return {
@@ -68,8 +72,18 @@ def handler(event: dict, context) -> dict:
         
         user_id = session['user_id']
         
-        if method == 'GET':
+        request_id = query_params.get('request_id')
+        action = query_params.get('action')
+        
+        if method == 'GET' and action == 'messages' and request_id:
+            from messages import handle_get_messages
+            return handle_get_messages(cur, int(request_id), user_id)
+        elif method == 'GET':
             return handle_get_requests(cur, user_id)
+        elif method == 'POST' and action == 'send_message' and request_id:
+            from messages import handle_send_message
+            body = json.loads(event.get('body', '{}'))
+            return handle_send_message(cur, conn, int(request_id), user_id, body)
         elif method == 'POST':
             body = json.loads(event.get('body', '{}'))
             return handle_create_request(cur, conn, user_id, body)

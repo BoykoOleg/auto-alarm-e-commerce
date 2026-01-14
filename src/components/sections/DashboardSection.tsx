@@ -7,7 +7,9 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import Icon from '@/components/ui/icon'
+import { RequestChat } from '@/components/RequestChat'
 
 interface DashboardSectionProps {
   setActiveSection: (section: string) => void
@@ -23,6 +25,7 @@ export const DashboardSection = ({ setActiveSection, userData, onLogout }: Dashb
   const [bonusHistory, setBonusHistory] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [selectedServiceType, setSelectedServiceType] = useState('multimedia')
+  const [selectedRequestId, setSelectedRequestId] = useState<number | null>(null)
 
   useEffect(() => {
     loadDashboardData()
@@ -425,6 +428,15 @@ export const DashboardSection = ({ setActiveSection, userData, onLogout }: Dashb
                               <Icon name="Calendar" className="h-4 w-4" />
                               <span>{new Date(request.created_at).toLocaleDateString('ru-RU')}</span>
                             </div>
+                            
+                            <Button 
+                              variant="outline" 
+                              className="w-full mt-4"
+                              onClick={() => setSelectedRequestId(request.id)}
+                            >
+                              <Icon name="MessageCircle" className="mr-2 h-4 w-4" />
+                              Открыть переписку
+                            </Button>
                           </div>
                         </CardContent>
                       </Card>
@@ -524,6 +536,15 @@ export const DashboardSection = ({ setActiveSection, userData, onLogout }: Dashb
           </TabsContent>
         </Tabs>
       </div>
+
+      <Dialog open={selectedRequestId !== null} onOpenChange={(open) => !open && setSelectedRequestId(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh]">
+          <DialogHeader>
+            <DialogTitle>Переписка по заявке</DialogTitle>
+          </DialogHeader>
+          {selectedRequestId && <RequestChat requestId={selectedRequestId} />}
+        </DialogContent>
+      </Dialog>
     </section>
   )
 }
