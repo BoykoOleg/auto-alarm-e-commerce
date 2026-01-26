@@ -8,6 +8,7 @@ import { DashboardSection } from "@/components/sections/DashboardSection";
 import { AdminDashboard } from "@/components/sections/AdminDashboard";
 import { PortfolioSection } from "@/components/sections/PortfolioSection";
 import { ProductsSection } from "@/components/sections/ProductsSection";
+import { ServicesSection } from "@/components/sections/ServicesSection";
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState("home");
@@ -187,6 +188,10 @@ const Index = () => {
 
         {activeSection === "products" && (
           <ProductsSection />
+        )}
+
+        {activeSection === "services" && (
+          <ServicesSection />
         )}
 
         <MainSections
