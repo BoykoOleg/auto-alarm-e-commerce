@@ -124,7 +124,16 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
   }
 
   const handleDeleteRequest = async (requestId: number) => {
-    if (!confirm('Пометить заявку на удаление?')) return
+    const request = requests.find(r => r.id === requestId)
+    
+    if (!request) return
+    
+    if (request.status !== 'cancelled') {
+      alert('Удаление возможно только из статуса "Отменено". Пожалуйста, сначала переведите заявку в статус "Отменено".')
+      return
+    }
+    
+    if (!confirm('Удалить заявку? Это действие нельзя отменить.')) return
     
     const token = localStorage.getItem('authToken')
 
@@ -143,9 +152,12 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
 
       if (response.ok) {
         loadAdminData()
+      } else {
+        alert('Ошибка при удалении заявки')
       }
     } catch (error) {
       console.error('Ошибка удаления заявки:', error)
+      alert('Ошибка при удалении заявки')
     }
   }
 

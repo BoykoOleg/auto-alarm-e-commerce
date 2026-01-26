@@ -170,15 +170,13 @@ export const AdminRequestsTab = ({
                                 </span>
                               )}
                             </Button>
-                            {request.status !== 'to_delete' && (
-                              <Button
-                                variant="destructive"
-                                size="sm"
-                                onClick={() => onDeleteRequest(request.id)}
-                              >
-                                <Icon name="Trash2" className="h-4 w-4" />
-                              </Button>
-                            )}
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => onDeleteRequest(request.id)}
+                            >
+                              <Icon name="Trash2" className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
                       </div>
