@@ -8,6 +8,7 @@ import { AdminWorksTab } from './admin/AdminWorksTab'
 import { AdminPartnersTab } from './admin/AdminPartnersTab'
 import { AdminWorksManagement } from './admin/AdminWorksManagement'
 import { AdminProductsManagement } from './admin/AdminProductsManagement'
+import { AdminServicesManagement } from './admin/AdminServicesManagement'
 
 interface AdminDashboardProps {
   setActiveSection: (section: string) => void
@@ -20,6 +21,7 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
   const [works, setWorks] = useState<any[]>([])
   const [portfolioCount, setPortfolioCount] = useState(0)
   const [productsCount, setProductsCount] = useState(0)
+  const [servicesCount, setServicesCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -31,7 +33,7 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
     const token = localStorage.getItem('authToken')
 
     try {
-      const [adminRes, portfolioRes, productsRes] = await Promise.all([
+      const [adminRes, portfolioRes, productsRes, servicesRes] = await Promise.all([
         fetch('https://functions.poehali.dev/e06691eb-ff8f-4b28-88e2-e9e033b0dd28', {
           method: 'GET',
           headers: {
@@ -40,7 +42,8 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
           },
         }),
         fetch('https://functions.poehali.dev/e06691eb-ff8f-4b28-88e2-e9e033b0dd28?action=content&type=works'),
-        fetch('https://functions.poehali.dev/e06691eb-ff8f-4b28-88e2-e9e033b0dd28?action=content&type=products')
+        fetch('https://functions.poehali.dev/e06691eb-ff8f-4b28-88e2-e9e033b0dd28?action=content&type=products'),
+        fetch('https://functions.poehali.dev/e06691eb-ff8f-4b28-88e2-e9e033b0dd28?action=content&type=services')
       ])
 
       if (adminRes.ok) {
@@ -58,6 +61,11 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
       if (productsRes.ok) {
         const productsData = await productsRes.json()
         setProductsCount((productsData.items || []).length)
+      }
+
+      if (servicesRes.ok) {
+        const servicesData = await servicesRes.json()
+        setServicesCount((servicesData.items || []).length)
       }
     } catch (error) {
       console.error('Ошибка загрузки данных:', error)
@@ -190,6 +198,7 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
     totalPartners: users.filter(u => u.user_role === 'partner').length,
     portfolioWorks: portfolioCount,
     productsCount: productsCount,
+    servicesCount: servicesCount,
   }
 
   return (
@@ -223,7 +232,7 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
         <AdminStatsCards stats={stats} />
 
         <Tabs defaultValue="requests" className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="requests" className="text-xs md:text-sm relative">
               <span className="hidden sm:inline">Заявки</span>
               <span className="sm:hidden">Заяв.</span>
@@ -253,6 +262,11 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
               <Icon name="Package" className="mr-1 h-4 w-4" />
               <span className="hidden sm:inline">Товары</span>
               <span className="sm:hidden">Тов.</span>
+            </TabsTrigger>
+            <TabsTrigger value="services" className="text-xs md:text-sm">
+              <Icon name="Wrench" className="mr-1 h-4 w-4" />
+              <span className="hidden sm:inline">Услуги</span>
+              <span className="sm:hidden">Усл.</span>
             </TabsTrigger>
           </TabsList>
 
@@ -286,6 +300,13 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
 
           <TabsContent value="products">
             <AdminProductsManagement
+              isLoading={isLoading}
+              onRefresh={loadAdminData}
+            />
+          </TabsContent>
+
+          <TabsContent value="services">
+            <AdminServicesManagement
               isLoading={isLoading}
               onRefresh={loadAdminData}
             />
