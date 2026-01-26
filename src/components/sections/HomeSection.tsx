@@ -21,9 +21,7 @@ export const HomeSection = ({ setActiveSection }: HomeSectionProps) => {
             </h1>
             <p className="text-lg text-muted-foreground mb-8">
               Переведем интерфейс вашего автомобиля на русский язык. Работаем с
-              любыми марками. Быстро, качественно, с гарантией. Для оставления
-              заявки зарегистрируйтесь в личном кабинете и отправьте нам заявку
-              на русификацию!
+              любыми марками. Быстро, качественно, с гарантией.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
