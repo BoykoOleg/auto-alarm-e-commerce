@@ -22,6 +22,12 @@ def handle_get_admin_messages(cur, request_id: int) -> dict:
         }
     
     cur.execute("""
+        UPDATE request_messages 
+        SET is_read = TRUE 
+        WHERE request_id = %s AND sender_type = 'client' AND is_read = FALSE
+    """, (request_id,))
+    
+    cur.execute("""
         SELECT 
             id, 
             sender_type, 

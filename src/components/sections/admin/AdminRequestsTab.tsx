@@ -15,6 +15,7 @@ interface AdminRequestsTabProps {
   isLoading: boolean
   onUpdateStatus: (requestId: number, newStatus: string) => void
   onCompleteWork: (requestId: number, workCost: number, bonusEarned: number) => void
+  onDeleteRequest: (requestId: number) => void
 }
 
 export const AdminRequestsTab = ({ 
@@ -22,7 +23,8 @@ export const AdminRequestsTab = ({
   users, 
   isLoading, 
   onUpdateStatus, 
-  onCompleteWork 
+  onCompleteWork,
+  onDeleteRequest
 }: AdminRequestsTabProps) => {
   const [selectedRequest, setSelectedRequest] = useState<any>(null)
   const [chatRequestId, setChatRequestId] = useState<number | null>(null)
@@ -33,6 +35,7 @@ export const AdminRequestsTab = ({
       in_progress: { label: 'В работе', variant: 'default' },
       completed: { label: 'Завершено', variant: 'outline' },
       cancelled: { label: 'Отменено', variant: 'destructive' },
+      to_delete: { label: 'На удаление', variant: 'destructive' },
     }
     const statusInfo = statusMap[status] || statusMap.pending
     return <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
@@ -127,6 +130,7 @@ export const AdminRequestsTab = ({
                             <Select
                               value={request.status}
                               onValueChange={(value) => onUpdateStatus(request.id, value)}
+                              disabled={request.status === 'to_delete'}
                             >
                               <SelectTrigger className="w-full sm:w-[180px]">
                                 <SelectValue />
@@ -151,15 +155,31 @@ export const AdminRequestsTab = ({
                               </Button>
                             )}
                           </div>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full"
-                            onClick={() => setChatRequestId(request.id)}
-                          >
-                            <Icon name="MessageCircle" className="mr-2 h-4 w-4" />
-                            Открыть переписку
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="flex-1 relative"
+                              onClick={() => setChatRequestId(request.id)}
+                            >
+                              <Icon name="MessageCircle" className="mr-2 h-4 w-4" />
+                              Открыть переписку
+                              {request.unread_count > 0 && (
+                                <span className="ml-2 bg-destructive text-destructive-foreground rounded-full px-2 py-0.5 text-xs font-medium">
+                                  {request.unread_count}
+                                </span>
+                              )}
+                            </Button>
+                            {request.status !== 'to_delete' && (
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => onDeleteRequest(request.id)}
+                              >
+                                <Icon name="Trash2" className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </CardContent>

@@ -111,6 +111,8 @@ def handler(event: dict, context) -> dict:
                 return handle_complete_work(cur, conn, body)
             elif action == 'pay_bonus':
                 return handle_pay_bonus(cur, conn, body)
+            elif action == 'delete_request':
+                return handle_delete_request(cur, conn, body)
         
         return {
             'statusCode': 400,
@@ -136,11 +138,14 @@ def handler(event: dict, context) -> dict:
 def handle_get_all_data(cur) -> dict:
     cur.execute("""
         SELECT 
-            id, user_id, client_name, client_phone, client_email,
-            car_brand, car_model, car_year, service_type,
-            description, status, created_at, updated_at
-        FROM russification_requests
-        ORDER BY created_at DESC
+            r.id, r.user_id, r.client_name, r.client_phone, r.client_email,
+            r.car_brand, r.car_model, r.car_year, r.service_type,
+            r.description, r.status, r.created_at, r.updated_at,
+            COUNT(CASE WHEN m.is_read = FALSE AND m.sender_type = 'client' THEN 1 END) as unread_count
+        FROM russification_requests r
+        LEFT JOIN request_messages m ON r.id = m.request_id
+        GROUP BY r.id
+        ORDER BY r.created_at DESC
     """)
     
     requests = [dict(row) for row in cur.fetchall()]
@@ -303,5 +308,32 @@ def handle_pay_bonus(cur, conn, body: dict) -> dict:
         'statusCode': 200,
         'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
         'body': json.dumps({'success': True, 'message': 'Bonus marked as paid'}),
+        'isBase64Encoded': False
+    }
+
+
+def handle_delete_request(cur, conn, body: dict) -> dict:
+    request_id = body.get('request_id')
+    
+    if not request_id:
+        return {
+            'statusCode': 400,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'success': False, 'message': 'Missing request_id'}),
+            'isBase64Encoded': False
+        }
+    
+    cur.execute("""
+        UPDATE russification_requests
+        SET status = 'to_delete', updated_at = NOW()
+        WHERE id = %s
+    """, (request_id,))
+    
+    conn.commit()
+    
+    return {
+        'statusCode': 200,
+        'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+        'body': json.dumps({'success': True, 'message': 'Request marked for deletion'}),
         'isBase64Encoded': False
     }

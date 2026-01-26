@@ -123,6 +123,34 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
     }
   }
 
+  const handleDeleteRequest = async (requestId: number) => {
+    if (!confirm('Пометить заявку на удаление?')) return
+    
+    const token = localStorage.getItem('authToken')
+
+    try {
+      const response = await fetch('https://functions.poehali.dev/e06691eb-ff8f-4b28-88e2-e9e033b0dd28', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          action: 'delete_request',
+          request_id: requestId,
+        }),
+      })
+
+      if (response.ok) {
+        loadAdminData()
+      }
+    } catch (error) {
+      console.error('Ошибка удаления заявки:', error)
+    }
+  }
+
+  const unreadMessagesCount = requests.reduce((sum, r) => sum + (r.unread_count || 0), 0)
+
   const stats = {
     totalRequests: requests.length,
     pendingRequests: requests.filter(r => r.status === 'pending').length,
@@ -164,10 +192,15 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
 
         <Tabs defaultValue="requests" className="w-full">
           <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="requests" className="text-xs md:text-sm">
+            <TabsTrigger value="requests" className="text-xs md:text-sm relative">
               <span className="hidden sm:inline">Все заявки</span>
               <span className="sm:hidden">Заявки</span>
               <span className="ml-1">({requests.length})</span>
+              {unreadMessagesCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center">
+                  {unreadMessagesCount}
+                </span>
+              )}
             </TabsTrigger>
             <TabsTrigger value="works" className="text-xs md:text-sm">
               <span className="hidden sm:inline">Завершённые работы</span>
@@ -188,6 +221,7 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
               isLoading={isLoading}
               onUpdateStatus={handleUpdateStatus}
               onCompleteWork={handleCompleteWork}
+              onDeleteRequest={handleDeleteRequest}
             />
           </TabsContent>
 
