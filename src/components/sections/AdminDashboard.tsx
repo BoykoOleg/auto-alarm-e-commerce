@@ -18,6 +18,8 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
   const [requests, setRequests] = useState<any[]>([])
   const [users, setUsers] = useState<any[]>([])
   const [works, setWorks] = useState<any[]>([])
+  const [portfolioCount, setPortfolioCount] = useState(0)
+  const [productsCount, setProductsCount] = useState(0)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
@@ -29,19 +31,33 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
     const token = localStorage.getItem('authToken')
 
     try {
-      const response = await fetch('https://functions.poehali.dev/e06691eb-ff8f-4b28-88e2-e9e033b0dd28', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      })
+      const [adminRes, portfolioRes, productsRes] = await Promise.all([
+        fetch('https://functions.poehali.dev/e06691eb-ff8f-4b28-88e2-e9e033b0dd28', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+          },
+        }),
+        fetch('https://functions.poehali.dev/e06691eb-ff8f-4b28-88e2-e9e033b0dd28?action=content&type=works'),
+        fetch('https://functions.poehali.dev/e06691eb-ff8f-4b28-88e2-e9e033b0dd28?action=content&type=products')
+      ])
 
-      if (response.ok) {
-        const data = await response.json()
+      if (adminRes.ok) {
+        const data = await adminRes.json()
         setRequests(data.requests || [])
         setUsers(data.users || [])
         setWorks(data.works || [])
+      }
+
+      if (portfolioRes.ok) {
+        const portfolioData = await portfolioRes.json()
+        setPortfolioCount((portfolioData.items || []).length)
+      }
+
+      if (productsRes.ok) {
+        const productsData = await productsRes.json()
+        setProductsCount((productsData.items || []).length)
       }
     } catch (error) {
       console.error('Ошибка загрузки данных:', error)
@@ -172,6 +188,8 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
     completedWorks: works.length,
     unpaidBonuses: works.filter(w => !w.is_bonus_paid).length,
     totalPartners: users.filter(u => u.user_role === 'partner').length,
+    portfolioWorks: portfolioCount,
+    productsCount: productsCount,
   }
 
   return (

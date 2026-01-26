@@ -7,6 +7,8 @@ interface Stats {
   completedWorks: number
   unpaidBonuses: number
   totalPartners: number
+  portfolioWorks: number
+  productsCount: number
 }
 
 interface AdminStatsCardsProps {
@@ -15,7 +17,7 @@ interface AdminStatsCardsProps {
 
 export const AdminStatsCards = ({ stats }: AdminStatsCardsProps) => {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 md:gap-4 mb-8">
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 md:gap-4 mb-8">
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -79,6 +81,28 @@ export const AdminStatsCards = ({ stats }: AdminStatsCardsProps) => {
         </CardHeader>
         <CardContent>
           <p className="text-2xl font-bold">{stats.totalPartners}</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Портфолио
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-2xl font-bold text-purple-600">{stats.portfolioWorks}</p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm font-medium text-muted-foreground">
+            Товаров
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-2xl font-bold text-teal-600">{stats.productsCount}</p>
         </CardContent>
       </Card>
     </div>

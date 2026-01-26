@@ -43,12 +43,20 @@ export const Header = ({ activeSection, setActiveSection, isAuthenticated }: Hea
             Главная
           </button>
           <button
-            onClick={() => setActiveSection('catalog')}
+            onClick={() => setActiveSection('portfolio')}
             className={`text-sm font-medium transition-colors hover:text-primary ${
-              activeSection === 'catalog' ? 'text-primary' : 'text-foreground/60'
+              activeSection === 'portfolio' ? 'text-primary' : 'text-foreground/60'
             }`}
           >
-            Каталог
+            Портфолио
+          </button>
+          <button
+            onClick={() => setActiveSection('products')}
+            className={`text-sm font-medium transition-colors hover:text-primary ${
+              activeSection === 'products' ? 'text-primary' : 'text-foreground/60'
+            }`}
+          >
+            Товары
           </button>
           <button
             onClick={() => setActiveSection('russification')}
@@ -65,14 +73,6 @@ export const Header = ({ activeSection, setActiveSection, isAuthenticated }: Hea
             }`}
           >
             Услуги
-          </button>
-          <button
-            onClick={() => setActiveSection('about')}
-            className={`text-sm font-medium transition-colors hover:text-primary ${
-              activeSection === 'about' ? 'text-primary' : 'text-foreground/60'
-            }`}
-          >
-            О компании
           </button>
           <button
             onClick={() => setActiveSection('contacts')}
@@ -139,10 +139,19 @@ export const Header = ({ activeSection, setActiveSection, isAuthenticated }: Hea
                 <Button
                   variant="ghost"
                   className="w-full justify-start text-base"
-                  onClick={() => handleNavClick('catalog')}
+                  onClick={() => handleNavClick('portfolio')}
                 >
-                  <Icon name="Grid3x3" className="mr-3 h-5 w-5" />
-                  Каталог
+                  <Icon name="Briefcase" className="mr-3 h-5 w-5" />
+                  Портфолио
+                </Button>
+                
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-base"
+                  onClick={() => handleNavClick('products')}
+                >
+                  <Icon name="Package" className="mr-3 h-5 w-5" />
+                  Товары
                 </Button>
                 
                 <Button
@@ -161,15 +170,6 @@ export const Header = ({ activeSection, setActiveSection, isAuthenticated }: Hea
                 >
                   <Icon name="Wrench" className="mr-3 h-5 w-5" />
                   Услуги
-                </Button>
-                
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-base"
-                  onClick={() => handleNavClick('about')}
-                >
-                  <Icon name="Info" className="mr-3 h-5 w-5" />
-                  О компании
                 </Button>
                 
                 <Button

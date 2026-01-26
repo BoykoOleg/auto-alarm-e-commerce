@@ -6,6 +6,8 @@ import { Footer } from "@/components/sections/Footer";
 import { LoginSection } from "@/components/sections/LoginSection";
 import { DashboardSection } from "@/components/sections/DashboardSection";
 import { AdminDashboard } from "@/components/sections/AdminDashboard";
+import { PortfolioSection } from "@/components/sections/PortfolioSection";
+import { ProductsSection } from "@/components/sections/ProductsSection";
 
 const Index = () => {
   const [activeSection, setActiveSection] = useState("home");
@@ -177,6 +179,14 @@ const Index = () => {
 
         {activeSection === "home" && (
           <HomeSection setActiveSection={setActiveSection} />
+        )}
+
+        {activeSection === "portfolio" && (
+          <PortfolioSection />
+        )}
+
+        {activeSection === "products" && (
+          <ProductsSection />
         )}
 
         <MainSections
