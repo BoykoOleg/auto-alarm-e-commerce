@@ -57,20 +57,28 @@ def handler(event: dict, context) -> dict:
             'isBase64Encoded': False
         }
     
-    auth_header = event.get('headers', {}).get('X-Authorization', '')
-    token = auth_header.replace('Bearer ', '')
-    
-    if not token:
-        return {
-            'statusCode': 401,
-            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'success': False, 'message': 'Authorization required'}),
-            'isBase64Encoded': False
-        }
+    request_id = query_params.get('request_id')
+    action = query_params.get('action')
     
     try:
         conn = psycopg2.connect(dsn)
         cur = conn.cursor(cursor_factory=RealDictCursor)
+        
+        if method == 'GET' and action == 'content':
+            from content import handle_get_content
+            content_type = query_params.get('type', 'works')
+            return handle_get_content(cur, content_type)
+        
+        auth_header = event.get('headers', {}).get('X-Authorization', '')
+        token = auth_header.replace('Bearer ', '')
+        
+        if not token:
+            return {
+                'statusCode': 401,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'success': False, 'message': 'Authorization required'}),
+                'isBase64Encoded': False
+            }
         
         cur.execute("""
             SELECT u.id, u.user_role
@@ -89,16 +97,9 @@ def handler(event: dict, context) -> dict:
                 'isBase64Encoded': False
             }
         
-        request_id = query_params.get('request_id')
-        action = query_params.get('action')
-        
         if method == 'GET' and action == 'messages' and request_id:
             from messages import handle_get_admin_messages
             return handle_get_admin_messages(cur, int(request_id))
-        elif method == 'GET' and action == 'content':
-            from content import handle_get_content
-            content_type = query_params.get('type', 'works')
-            return handle_get_content(cur, content_type)
         elif method == 'GET':
             return handle_get_all_data(cur)
         elif method == 'POST' and action == 'send_message' and request_id:
