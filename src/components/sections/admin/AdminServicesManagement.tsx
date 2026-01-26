@@ -198,7 +198,9 @@ export const AdminServicesManagement = ({ isLoading, onRefresh }: AdminServicesM
                   )}
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between gap-2">
-                      <CardTitle className="text-base">{service.title}</CardTitle>
+                      <CardTitle className={`text-base ${!service.is_active ? 'line-through opacity-50' : ''}`}>
+                        {service.title}
+                      </CardTitle>
                       {!service.is_active && (
                         <Badge variant="secondary">Скрыта</Badge>
                       )}
