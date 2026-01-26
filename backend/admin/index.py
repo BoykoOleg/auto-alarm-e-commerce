@@ -95,6 +95,10 @@ def handler(event: dict, context) -> dict:
         if method == 'GET' and action == 'messages' and request_id:
             from messages import handle_get_admin_messages
             return handle_get_admin_messages(cur, int(request_id))
+        elif method == 'GET' and action == 'content':
+            from content import handle_get_content
+            content_type = query_params.get('type', 'works')
+            return handle_get_content(cur, content_type)
         elif method == 'GET':
             return handle_get_all_data(cur)
         elif method == 'POST' and action == 'send_message' and request_id:
@@ -113,6 +117,15 @@ def handler(event: dict, context) -> dict:
                 return handle_pay_bonus(cur, conn, body)
             elif action == 'delete_request':
                 return handle_delete_request(cur, conn, body)
+            elif action == 'create_content':
+                from content import handle_create_content
+                return handle_create_content(cur, conn, body)
+            elif action == 'update_content':
+                from content import handle_update_content
+                return handle_update_content(cur, conn, body)
+            elif action == 'delete_content':
+                from content import handle_delete_content
+                return handle_delete_content(cur, conn, body)
         
         return {
             'statusCode': 400,

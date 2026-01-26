@@ -6,6 +6,8 @@ import { AdminStatsCards } from './admin/AdminStatsCards'
 import { AdminRequestsTab } from './admin/AdminRequestsTab'
 import { AdminWorksTab } from './admin/AdminWorksTab'
 import { AdminPartnersTab } from './admin/AdminPartnersTab'
+import { AdminWorksManagement } from './admin/AdminWorksManagement'
+import { AdminProductsManagement } from './admin/AdminProductsManagement'
 
 interface AdminDashboardProps {
   setActiveSection: (section: string) => void
@@ -203,10 +205,10 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
         <AdminStatsCards stats={stats} />
 
         <Tabs defaultValue="requests" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="requests" className="text-xs md:text-sm relative">
-              <span className="hidden sm:inline">Все заявки</span>
-              <span className="sm:hidden">Заявки</span>
+              <span className="hidden sm:inline">Заявки</span>
+              <span className="sm:hidden">Заяв.</span>
               <span className="ml-1">({requests.length})</span>
               {unreadMessagesCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center">
@@ -214,15 +216,25 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
                 </span>
               )}
             </TabsTrigger>
-            <TabsTrigger value="works" className="text-xs md:text-sm">
-              <span className="hidden sm:inline">Завершённые работы</span>
-              <span className="sm:hidden">Работы</span>
+            <TabsTrigger value="completed-works" className="text-xs md:text-sm">
+              <span className="hidden sm:inline">Работы</span>
+              <span className="sm:hidden">Раб.</span>
               <span className="ml-1">({works.length})</span>
             </TabsTrigger>
             <TabsTrigger value="partners" className="text-xs md:text-sm">
               <span className="hidden sm:inline">Партнёры</span>
-              <span className="sm:hidden">Партн.</span>
+              <span className="sm:hidden">Парт.</span>
               <span className="ml-1">({stats.totalPartners})</span>
+            </TabsTrigger>
+            <TabsTrigger value="portfolio" className="text-xs md:text-sm">
+              <Icon name="Briefcase" className="mr-1 h-4 w-4" />
+              <span className="hidden sm:inline">Портфолио</span>
+              <span className="sm:hidden">Порт.</span>
+            </TabsTrigger>
+            <TabsTrigger value="products" className="text-xs md:text-sm">
+              <Icon name="Package" className="mr-1 h-4 w-4" />
+              <span className="hidden sm:inline">Товары</span>
+              <span className="sm:hidden">Тов.</span>
             </TabsTrigger>
           </TabsList>
 
@@ -237,13 +249,27 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
             />
           </TabsContent>
 
-          <TabsContent value="works">
+          <TabsContent value="completed-works">
             <AdminWorksTab
               works={works}
               users={users}
               requests={requests}
               isLoading={isLoading}
               onPayBonus={handlePayBonus}
+            />
+          </TabsContent>
+
+          <TabsContent value="portfolio">
+            <AdminWorksManagement
+              isLoading={isLoading}
+              onRefresh={loadAdminData}
+            />
+          </TabsContent>
+
+          <TabsContent value="products">
+            <AdminProductsManagement
+              isLoading={isLoading}
+              onRefresh={loadAdminData}
             />
           </TabsContent>
 
