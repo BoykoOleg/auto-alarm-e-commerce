@@ -1,249 +1,329 @@
 import json
 import os
+import asyncio
+from aiogram import Bot, Dispatcher, types, F
+from aiogram.filters import Command, StateFilter
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.fsm.storage.memory import MemoryStorage
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 import psycopg2
 from psycopg2.extras import RealDictCursor
-import urllib.request
-import urllib.parse
-from datetime import datetime
 
-# Хранилище состояний пользователей (в production лучше использовать Redis)
-user_states = {}
+bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
+site_url = os.environ.get('SITE_URL', 'https://proisvodnaya.poehali.dev')
+bot = Bot(token=bot_token)
+storage = MemoryStorage()
+dp = Dispatcher(storage=storage)
 
-def handler(event: dict, context) -> dict:
-    '''Telegram бот для приёма заявок от клиентов
+class RequestStates(StatesGroup):
+    waiting_name = State()
+    waiting_phone = State()
+    waiting_car = State()
+    waiting_message = State()
+
+class RegistrationStates(StatesGroup):
+    waiting_reg_name = State()
+    waiting_reg_phone = State()
+    waiting_reg_email = State()
+
+def get_main_menu(is_registered: bool = False):
+    '''Главное меню с inline-кнопками'''
+    buttons = []
     
-    Функционал:
-    - Приём заявок от незарегистрированных пользователей через диалог
-    - Быстрое создание заявок для зарегистрированных пользователей
-    - Просмотр своих заявок
-    - Webhook-based бот (работает 24/7)
+    if is_registered:
+        buttons.append([InlineKeyboardButton(
+            text="🆕 Создать заявку",
+            callback_data="new_request"
+        )])
+        buttons.append([InlineKeyboardButton(
+            text="📋 Мои заявки",
+            callback_data="my_requests"
+        )])
+    else:
+        buttons.append([InlineKeyboardButton(
+            text="✅ Зарегистрироваться",
+            callback_data="register"
+        )])
+        buttons.append([InlineKeyboardButton(
+            text="📝 Создать заявку без регистрации",
+            callback_data="new_request"
+        )])
     
-    Требуемые секреты:
-    - TELEGRAM_BOT_TOKEN: токен бота
-    - TELEGRAM_CHAT_ID: ID админского чата для уведомлений
-    - DATABASE_URL: подключение к БД
-    '''
+    buttons.append([InlineKeyboardButton(
+        text="🌐 Перейти на сайт",
+        web_app=WebAppInfo(url=site_url)
+    )])
     
-    method = event.get('httpMethod', 'POST')
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+def get_cancel_button():
+    '''Кнопка отмены'''
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="❌ Отменить", callback_data="cancel")]
+    ])
+
+@dp.message(Command("start"))
+async def cmd_start(message: types.Message):
+    '''Обработчик команды /start'''
+    user_id = message.from_user.id
+    first_name = message.from_user.first_name or "друг"
     
-    if method == 'OPTIONS':
-        return {
-            'statusCode': 200,
-            'headers': {
-                'Access-Control-Allow-Origin': '*',
-                'Access-Control-Allow-Methods': 'POST, OPTIONS',
-                'Access-Control-Allow-Headers': 'Content-Type'
-            },
-            'body': '',
-            'isBase64Encoded': False
-        }
+    user_data = get_user_by_telegram(user_id)
+    is_registered = user_data is not None
     
-    try:
-        update = json.loads(event.get('body', '{}'))
+    if is_registered:
+        text = f"👋 С возвращением, {user_data['name']}!\n\n🚗 Автосервис \"Химчистка\" готов помочь.\n\nВыберите действие:"
+    else:
+        text = f"👋 Привет, {first_name}!\n\n🚗 Я бот автосервиса \"Химчистка\".\n\n📌 Я помогу:\n• Оставить заявку на русификацию\n• Следить за статусом заявок\n• Получать уведомления\n\nВыберите действие:"
+    
+    await message.answer(
+        text,
+        reply_markup=get_main_menu(is_registered)
+    )
+
+@dp.callback_query(F.data == "main_menu")
+async def back_to_menu(callback: types.CallbackQuery, state: FSMContext):
+    '''Возврат в главное меню'''
+    await state.clear()
+    user_id = callback.from_user.id
+    user_data = get_user_by_telegram(user_id)
+    is_registered = user_data is not None
+    
+    first_name = callback.from_user.first_name or "друг"
+    
+    if is_registered:
+        text = f"👋 С возвращением, {user_data['name']}!\n\n🚗 Автосервис \"Химчистка\" готов помочь.\n\nВыберите действие:"
+    else:
+        text = f"👋 Привет, {first_name}!\n\n🚗 Я бот автосервиса \"Химчистка\".\n\nВыберите действие:"
+    
+    await callback.message.edit_text(
+        text,
+        reply_markup=get_main_menu(is_registered)
+    )
+    await callback.answer()
+
+@dp.callback_query(F.data == "register")
+async def start_registration(callback: types.CallbackQuery, state: FSMContext):
+    '''Начало регистрации'''
+    await state.set_state(RegistrationStates.waiting_reg_name)
+    
+    await callback.message.edit_text(
+        "✅ Регистрация на сервисе\n\n📝 Как вас зовут?",
+        reply_markup=get_cancel_button()
+    )
+    await callback.answer()
+
+@dp.message(RegistrationStates.waiting_reg_name)
+async def process_reg_name(message: types.Message, state: FSMContext):
+    '''Обработка имени при регистрации'''
+    if len(message.text) < 2:
+        await message.answer("❌ Имя слишком короткое. Введите ваше имя:")
+        return
+    
+    await state.update_data(name=message.text)
+    await state.set_state(RegistrationStates.waiting_reg_phone)
+    
+    await message.answer(
+        "📱 Укажите номер телефона:",
+        reply_markup=get_cancel_button()
+    )
+
+@dp.message(RegistrationStates.waiting_reg_phone)
+async def process_reg_phone(message: types.Message, state: FSMContext):
+    '''Обработка телефона при регистрации'''
+    if len(message.text) < 10:
+        await message.answer("❌ Некорректный номер. Введите номер телефона:")
+        return
+    
+    await state.update_data(phone=message.text)
+    await state.set_state(RegistrationStates.waiting_reg_email)
+    
+    await message.answer(
+        "📧 Укажите email для входа в личный кабинет:",
+        reply_markup=get_cancel_button()
+    )
+
+@dp.message(RegistrationStates.waiting_reg_email)
+async def process_reg_email(message: types.Message, state: FSMContext):
+    '''Обработка email и завершение регистрации'''
+    email = message.text
+    
+    if '@' not in email or '.' not in email:
+        await message.answer("❌ Некорректный email. Введите действительный email:")
+        return
+    
+    data = await state.get_data()
+    user_id = message.from_user.id
+    username = message.from_user.username
+    
+    success = register_user(
+        telegram_id=user_id,
+        telegram_username=username,
+        name=data['name'],
+        phone=data['phone'],
+        email=email
+    )
+    
+    if success:
+        await state.clear()
         
-        # Получаем сообщение от пользователя
-        message = update.get('message', {})
-        callback_query = update.get('callback_query', {})
+        buttons = [
+            [InlineKeyboardButton(text="🆕 Создать заявку", callback_data="new_request")],
+            [InlineKeyboardButton(text="🌐 Перейти на сайт", web_app=WebAppInfo(url=site_url))]
+        ]
         
-        if callback_query:
-            return handle_callback(callback_query)
-        elif message:
-            return handle_message(message)
-        
-        return ok_response()
-        
-    except Exception as e:
-        print(f"Error: {e}")
-        return ok_response()
+        await message.answer(
+            f"✅ Регистрация завершена!\n\n👤 Имя: {data['name']}\n📱 Телефон: {data['phone']}\n📧 Email: {email}\n\n🔐 Пароль для входа отправлен на email.",
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons)
+        )
+    else:
+        await message.answer(
+            "❌ Ошибка регистрации. Возможно, email уже используется.\n\n/start - Вернуться в меню"
+        )
+        await state.clear()
 
-
-def handle_message(message: dict) -> dict:
-    '''Обработка текстовых сообщений'''
-    chat_id = message['chat']['id']
-    text = message.get('text', '')
-    user_id = message['from']['id']
-    username = message['from'].get('username', '')
-    first_name = message['from'].get('first_name', 'Пользователь')
-    
-    print(f"Received message: text='{text}', chat_id={chat_id}, user_id={user_id}")
-    
-    # Команды
-    if text == '/start':
-        print(f"Processing /start command for user {user_id}")
-        return send_welcome(chat_id, first_name)
-    elif text == '/new':
-        return start_new_request(chat_id, user_id)
-    elif text == '/my':
-        return show_my_requests(chat_id, user_id)
-    elif text == '/cancel':
-        return cancel_operation(chat_id, user_id)
-    
-    # Проверяем состояние пользователя
-    state = user_states.get(user_id, {})
-    current_step = state.get('step')
-    
-    if current_step == 'waiting_name':
-        return process_name(chat_id, user_id, text)
-    elif current_step == 'waiting_phone':
-        return process_phone(chat_id, user_id, text)
-    elif current_step == 'waiting_car':
-        return process_car(chat_id, user_id, text)
-    elif current_step == 'waiting_message':
-        return process_message_text(chat_id, user_id, text)
-    
-    # По умолчанию показываем помощь
-    return send_help(chat_id)
-
-
-def send_welcome(chat_id: int, first_name: str) -> dict:
-    '''Приветственное сообщение'''
-    text = f"""Привет, {first_name}!
-
-Я бот автосервиса "Химчистка". Помогу оставить заявку на услуги.
-
-Что я умею:
-/new - Создать новую заявку
-/my - Мои заявки
-/cancel - Отменить текущее действие
-
-Нажми /new чтобы начать!"""
-    
-    print(f"Sending welcome to chat_id={chat_id}, first_name={first_name}")
-    return send_message(chat_id, text)
-
-
-def send_help(chat_id: int) -> dict:
-    '''Справка'''
-    text = """Доступные команды:
-
-/new - Создать новую заявку
-/my - Посмотреть мои заявки
-/cancel - Отменить текущее действие"""
-    
-    return send_message(chat_id, text)
-
-
-def start_new_request(chat_id: int, user_id: int) -> dict:
+@dp.callback_query(F.data == "new_request")
+async def start_new_request(callback: types.CallbackQuery, state: FSMContext):
     '''Начало создания заявки'''
-    # Проверяем, зарегистрирован ли пользователь
+    user_id = callback.from_user.id
     user_data = get_user_by_telegram(user_id)
     
     if user_data:
-        # Пользователь зарегистрирован - предлагаем быструю заявку
-        user_states[user_id] = {
-            'step': 'waiting_message',
-            'user_data': user_data
-        }
-        text = f"""✅ Вы зарегистрированы как {user_data['name']}
-
-Опишите проблему или нужную услугу:"""
+        await state.update_data(user_data=user_data)
+        await state.set_state(RequestStates.waiting_message)
+        
+        await callback.message.edit_text(
+            f"✅ Вы зарегистрированы как {user_data['name']}\n\n💬 Опишите проблему или нужную услугу:",
+            reply_markup=get_cancel_button()
+        )
     else:
-        # Новый пользователь - собираем данные
-        user_states[user_id] = {'step': 'waiting_name'}
-        text = """📝 Создание новой заявки
-
-Как вас зовут?"""
+        await state.set_state(RequestStates.waiting_name)
+        
+        await callback.message.edit_text(
+            "📝 Создание заявки\n\n👤 Как вас зовут?",
+            reply_markup=get_cancel_button()
+        )
     
-    return send_message(chat_id, text)
+    await callback.answer()
 
-
-def process_name(chat_id: int, user_id: int, name: str) -> dict:
+@dp.message(RequestStates.waiting_name)
+async def process_name(message: types.Message, state: FSMContext):
     '''Обработка имени'''
-    if len(name) < 2:
-        return send_message(chat_id, "❌ Имя слишком короткое. Введите ваше имя:")
+    if len(message.text) < 2:
+        await message.answer("❌ Имя слишком короткое. Введите ваше имя:")
+        return
     
-    user_states[user_id]['name'] = name
-    user_states[user_id]['step'] = 'waiting_phone'
+    await state.update_data(name=message.text)
+    await state.set_state(RequestStates.waiting_phone)
     
-    return send_message(chat_id, "📱 Укажите ваш номер телефона:")
+    await message.answer(
+        "📱 Укажите номер телефона:",
+        reply_markup=get_cancel_button()
+    )
 
-
-def process_phone(chat_id: int, user_id: int, phone: str) -> dict:
+@dp.message(RequestStates.waiting_phone)
+async def process_phone(message: types.Message, state: FSMContext):
     '''Обработка телефона'''
-    if len(phone) < 10:
-        return send_message(chat_id, "❌ Некорректный номер. Введите номер телефона:")
+    if len(message.text) < 10:
+        await message.answer("❌ Некорректный номер. Введите номер телефона:")
+        return
     
-    user_states[user_id]['phone'] = phone
-    user_states[user_id]['step'] = 'waiting_car'
+    await state.update_data(phone=message.text)
+    await state.set_state(RequestStates.waiting_car)
     
-    return send_message(chat_id, "🚗 Какой у вас автомобиль? (марка и модель)")
+    await message.answer(
+        "🚗 Какой у вас автомобиль? (марка и модель)",
+        reply_markup=get_cancel_button()
+    )
 
-
-def process_car(chat_id: int, user_id: int, car: str) -> dict:
+@dp.message(RequestStates.waiting_car)
+async def process_car(message: types.Message, state: FSMContext):
     '''Обработка автомобиля'''
-    if len(car) < 2:
-        return send_message(chat_id, "❌ Укажите марку и модель автомобиля:")
+    if len(message.text) < 2:
+        await message.answer("❌ Укажите марку и модель автомобиля:")
+        return
     
-    user_states[user_id]['car'] = car
-    user_states[user_id]['step'] = 'waiting_message'
+    await state.update_data(car=message.text)
+    await state.set_state(RequestStates.waiting_message)
     
-    return send_message(chat_id, "💬 Опишите проблему или нужную услугу:")
+    await message.answer(
+        "💬 Опишите проблему или нужную услугу:",
+        reply_markup=get_cancel_button()
+    )
 
-
-def process_message_text(chat_id: int, user_id: int, message_text: str) -> dict:
-    '''Обработка описания проблемы и создание заявки'''
-    state = user_states.get(user_id, {})
+@dp.message(RequestStates.waiting_message)
+async def process_message_text(message: types.Message, state: FSMContext):
+    '''Обработка описания и создание заявки'''
+    data = await state.get_data()
     
-    # Получаем данные пользователя
-    if 'user_data' in state:
-        # Зарегистрированный пользователь
-        user_data = state['user_data']
+    if 'user_data' in data:
+        user_data = data['user_data']
         name = user_data['name']
         phone = user_data['phone']
         email = user_data['email']
         user_db_id = user_data['id']
+        car = "Не указан"
     else:
-        # Новый пользователь
-        name = state.get('name', 'Не указано')
-        phone = state.get('phone', 'Не указан')
+        name = data.get('name', 'Не указано')
+        phone = data.get('phone', 'Не указан')
         email = None
         user_db_id = None
+        car = data.get('car', 'Не указан')
     
-    car = state.get('car', 'Не указан')
-    
-    # Создаём заявку в базе
     request_id = create_request_in_db(
         user_id=user_db_id,
         name=name,
         phone=phone,
         email=email,
         car=car,
-        message=message_text,
-        source='telegram'
+        message=message.text
     )
     
     if request_id:
-        # Отправляем уведомление админу
-        notify_admin_new_request(request_id, name, phone, car, message_text)
+        await notify_admin_new_request(request_id, name, phone, car, message.text)
+        await state.clear()
         
-        # Очищаем состояние
-        if user_id in user_states:
-            del user_states[user_id]
+        buttons = [
+            [InlineKeyboardButton(text="🆕 Создать ещё заявку", callback_data="new_request")],
+            [InlineKeyboardButton(text="📋 Мои заявки", callback_data="my_requests")],
+            [InlineKeyboardButton(text="🌐 Перейти на сайт", web_app=WebAppInfo(url=site_url))]
+        ]
         
-        text = f"""✅ Заявка #{request_id} успешно создана!
-
-Мы свяжемся с вами в ближайшее время.
-
-/new - Создать ещё заявку
-/my - Мои заявки"""
-        
-        return send_message(chat_id, text)
+        await message.answer(
+            f"✅ Заявка #{request_id} создана!\n\n📞 Мы свяжемся с вами в ближайшее время.",
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons)
+        )
     else:
-        return send_message(chat_id, "❌ Ошибка создания заявки. Попробуйте позже.")
+        await message.answer(
+            "❌ Ошибка создания заявки. Попробуйте позже.\n\n/start - Вернуться в меню"
+        )
+        await state.clear()
 
-
-def show_my_requests(chat_id: int, user_id: int) -> dict:
+@dp.callback_query(F.data == "my_requests")
+async def show_my_requests(callback: types.CallbackQuery):
     '''Показать заявки пользователя'''
+    user_id = callback.from_user.id
     requests = get_user_requests(user_id)
     
     if not requests:
-        return send_message(chat_id, "У вас пока нет заявок.\n\n/new - Создать заявку")
+        buttons = [
+            [InlineKeyboardButton(text="🆕 Создать заявку", callback_data="new_request")],
+            [InlineKeyboardButton(text="◀️ Главное меню", callback_data="main_menu")]
+        ]
+        
+        await callback.message.edit_text(
+            "📋 У вас пока нет заявок",
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons)
+        )
+        await callback.answer()
+        return
     
     text = "📋 Ваши заявки:\n\n"
     
     for req in requests:
         status_emoji = {
-            'new': '🆕',
+            'pending': '🆕',
             'in_progress': '⏳',
             'completed': '✅',
             'cancelled': '❌'
@@ -256,37 +336,39 @@ def show_my_requests(chat_id: int, user_id: int) -> dict:
             'cancelled': 'Отменена'
         }.get(req['status'], req['status'])
         
-        text += f"""{status_emoji} Заявка #{req['id']}
-Статус: {status_text}
-Автомобиль: {req['car']}
-Дата: {req['created_at'][:16]}
-
-"""
+        text += f"{status_emoji} Заявка #{req['id']}\n"
+        text += f"Статус: {status_text}\n"
+        text += f"Автомобиль: {req['car']}\n"
+        text += f"Дата: {req['created_at'][:16]}\n\n"
     
-    text += "\n/new - Создать новую заявку"
+    buttons = [
+        [InlineKeyboardButton(text="🆕 Создать новую заявку", callback_data="new_request")],
+        [InlineKeyboardButton(text="◀️ Главное меню", callback_data="main_menu")]
+    ]
     
-    return send_message(chat_id, text)
+    await callback.message.edit_text(
+        text,
+        reply_markup=InlineKeyboardMarkup(inline_keyboard=buttons)
+    )
+    await callback.answer()
 
-
-def cancel_operation(chat_id: int, user_id: int) -> dict:
+@dp.callback_query(F.data == "cancel")
+async def cancel_operation(callback: types.CallbackQuery, state: FSMContext):
     '''Отмена текущей операции'''
-    if user_id in user_states:
-        del user_states[user_id]
-        return send_message(chat_id, "❌ Операция отменена.\n\n/new - Создать заявку")
-    else:
-        return send_message(chat_id, "Нет активных операций.\n\n/new - Создать заявку")
+    await state.clear()
+    
+    user_id = callback.from_user.id
+    user_data = get_user_by_telegram(user_id)
+    is_registered = user_data is not None
+    
+    await callback.message.edit_text(
+        "❌ Операция отменена\n\nВыберите действие:",
+        reply_markup=get_main_menu(is_registered)
+    )
+    await callback.answer()
 
-
-def handle_callback(callback_query: dict) -> dict:
-    '''Обработка inline кнопок'''
-    # Пока не используется, но можно добавить в будущем
-    return ok_response()
-
-
-# === DATABASE FUNCTIONS ===
-
-def get_user_by_telegram(telegram_id: int) -> dict:
-    '''Проверка регистрации пользователя по Telegram ID'''
+def get_user_by_telegram(telegram_id: int):
+    '''Получить пользователя по Telegram ID'''
     try:
         dsn = os.environ.get('DATABASE_URL')
         conn = psycopg2.connect(dsn)
@@ -306,15 +388,40 @@ def get_user_by_telegram(telegram_id: int) -> dict:
     except:
         return None
 
+def register_user(telegram_id: int, telegram_username: str, name: str, phone: str, email: str):
+    '''Регистрация нового пользователя'''
+    try:
+        dsn = os.environ.get('DATABASE_URL')
+        conn = psycopg2.connect(dsn)
+        cur = conn.cursor()
+        
+        import secrets
+        temp_password = secrets.token_urlsafe(12)
+        
+        cur.execute("""
+            INSERT INTO users (telegram_id, telegram_username, name, email, phone, 
+                             password_hash, user_type, user_role)
+            VALUES (%s, %s, %s, %s, %s, %s, 'client', 'user')
+            RETURNING id
+        """, (telegram_id, telegram_username, name, email, phone, temp_password))
+        
+        user_id = cur.fetchone()[0]
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return True
+    except Exception as e:
+        print(f"Registration error: {e}")
+        return False
 
-def create_request_in_db(user_id, name, phone, email, car, message, source) -> int:
+def create_request_in_db(user_id, name, phone, email, car, message):
     '''Создание заявки в БД'''
     try:
         dsn = os.environ.get('DATABASE_URL')
         conn = psycopg2.connect(dsn)
         cur = conn.cursor()
         
-        # Разбиваем car на марку и модель
         car_parts = car.split(' ', 1)
         car_brand = car_parts[0] if len(car_parts) > 0 else 'Не указано'
         car_model = car_parts[1] if len(car_parts) > 1 else ''
@@ -337,15 +444,13 @@ def create_request_in_db(user_id, name, phone, email, car, message, source) -> i
         print(f"DB Error: {e}")
         return None
 
-
-def get_user_requests(telegram_id: int) -> list:
+def get_user_requests(telegram_id: int):
     '''Получить заявки пользователя'''
     try:
         dsn = os.environ.get('DATABASE_URL')
         conn = psycopg2.connect(dsn)
         cur = conn.cursor(cursor_factory=RealDictCursor)
         
-        # Пытаемся найти по telegram_id через users таблицу
         cur.execute("""
             SELECT r.id, r.status, r.car_brand || ' ' || r.car_model as car, r.created_at
             FROM russification_requests r
@@ -363,86 +468,68 @@ def get_user_requests(telegram_id: int) -> list:
     except:
         return []
 
-
-def notify_admin_new_request(request_id, name, phone, car, message):
+async def notify_admin_new_request(request_id, name, phone, car, message):
     '''Уведомление админа о новой заявке'''
     try:
-        bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
         chat_id = os.environ.get('TELEGRAM_CHAT_ID')
         
-        if not bot_token or not chat_id:
+        if not chat_id:
             return
         
-        text = f"""🔔 <b>Новая заявка из Telegram</b>
-
-📝 Заявка #{request_id}
-👤 Имя: {name}
-📱 Телефон: {phone}
-🚗 Автомобиль: {car}
-💬 Сообщение: {message}"""
+        text = f"🔔 <b>Новая заявка из Telegram</b>\n\n"
+        text += f"📝 Заявка #{request_id}\n"
+        text += f"👤 Имя: {name}\n"
+        text += f"📱 Телефон: {phone}\n"
+        text += f"🚗 Автомобиль: {car}\n"
+        text += f"💬 Сообщение: {message}"
         
-        url = f'https://api.telegram.org/bot{bot_token}/sendMessage'
-        data = {
-            'chat_id': chat_id,
-            'text': text,
-            'parse_mode': 'HTML'
-        }
-        
-        req = urllib.request.Request(
-            url,
-            data=json.dumps(data).encode('utf-8'),
-            headers={'Content-Type': 'application/json'}
+        await bot.send_message(
+            chat_id=chat_id,
+            text=text,
+            parse_mode='HTML'
         )
-        
-        urllib.request.urlopen(req)
     except:
         pass
 
-
-# === TELEGRAM API ===
-
-def send_message(chat_id: int, text: str, keyboard=None) -> dict:
-    '''Отправка сообщения пользователю'''
-    try:
-        bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
-        url = f'https://api.telegram.org/bot{bot_token}/sendMessage'
-        
-        data = {
-            'chat_id': chat_id,
-            'text': text
+def handler(event: dict, context) -> dict:
+    '''Webhook handler для Cloud Function
+    
+    Принимает обновления от Telegram и обрабатывает их через aiogram
+    '''
+    method = event.get('httpMethod', 'POST')
+    
+    if method == 'OPTIONS':
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type'
+            },
+            'body': '',
+            'isBase64Encoded': False
         }
+    
+    try:
+        update_data = json.loads(event.get('body', '{}'))
+        update = types.Update(**update_data)
         
-        if keyboard:
-            data['reply_markup'] = keyboard
+        asyncio.run(dp.feed_update(bot=bot, update=update))
         
-        print(f"Sending to Telegram: chat_id={chat_id}, text_length={len(text)}")
-        print(f"Text preview: {text[:100]}")
-        
-        req = urllib.request.Request(
-            url,
-            data=json.dumps(data).encode('utf-8'),
-            headers={'Content-Type': 'application/json'}
-        )
-        
-        response = urllib.request.urlopen(req)
-        result = json.loads(response.read().decode('utf-8'))
-        print(f"Message sent successfully: {result.get('ok', False)}")
-    except urllib.error.HTTPError as e:
-        error_body = e.read().decode('utf-8')
-        print(f"Telegram API Error {e.code}: {error_body}")
+        return {
+            'statusCode': 200,
+            'headers': {'Content-Type': 'application/json'},
+            'body': json.dumps({'ok': True}),
+            'isBase64Encoded': False
+        }
     except Exception as e:
-        print(f"Send message error: {e}")
+        print(f"Error: {e}")
         import traceback
         print(traceback.format_exc())
-    
-    return ok_response()
-
-
-def ok_response() -> dict:
-    '''Стандартный ответ для Telegram webhook'''
-    return {
-        'statusCode': 200,
-        'headers': {'Content-Type': 'application/json'},
-        'body': json.dumps({'ok': True}),
-        'isBase64Encoded': False
-    }
+        
+        return {
+            'statusCode': 200,
+            'headers': {'Content-Type': 'application/json'},
+            'body': json.dumps({'ok': True}),
+            'isBase64Encoded': False
+        }
