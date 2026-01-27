@@ -31,7 +31,14 @@ def handler(event: dict, context) -> dict:
         }
     
     try:
-        update = json.loads(event.get('body', '{}'))
+        body = event.get('body', '{}')
+        print(f"=== INCOMING REQUEST ===")
+        print(f"Method: {method}")
+        print(f"Headers: {event.get('headers', {})}")
+        print(f"Body: {body}")
+        print(f"========================")
+        
+        update = json.loads(body)
         
         message = update.get('message', {})
         callback_query = update.get('callback_query', {})
