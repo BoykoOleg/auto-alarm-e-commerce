@@ -405,8 +405,7 @@ def send_message(chat_id: int, text: str, keyboard=None) -> dict:
         
         data = {
             'chat_id': chat_id,
-            'text': text,
-            'parse_mode': 'HTML'
+            'text': text
         }
         
         if keyboard:
@@ -418,9 +417,13 @@ def send_message(chat_id: int, text: str, keyboard=None) -> dict:
             headers={'Content-Type': 'application/json'}
         )
         
-        urllib.request.urlopen(req)
+        response = urllib.request.urlopen(req)
+        result = json.loads(response.read().decode('utf-8'))
+        print(f"Message sent successfully: {result.get('ok', False)}")
     except Exception as e:
         print(f"Send message error: {e}")
+        import traceback
+        print(traceback.format_exc())
     
     return ok_response()
 
