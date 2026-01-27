@@ -14,14 +14,18 @@
         "update_id": 123456,
         "message": {
           "message_id": 1,
+          "date": 1706371200,
           "from": {
             "id": 123456789,
             "first_name": "Test",
-            "username": "testuser"
+            "username": "testuser",
+            "is_bot": false
           },
           "chat": {
             "id": 123456789,
-            "type": "private"
+            "type": "private",
+            "first_name": "Test",
+            "username": "testuser"
           },
           "text": "/start"
         }
