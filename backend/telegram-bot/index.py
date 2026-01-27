@@ -18,7 +18,17 @@ def handler(event: dict, context) -> dict:
     method = event.get('httpMethod', 'POST')
     
     if method == 'OPTIONS':
-        return ok_response()
+        return {
+            'statusCode': 200,
+            'headers': {
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type',
+                'Access-Control-Max-Age': '86400'
+            },
+            'body': '',
+            'isBase64Encoded': False
+        }
     
     try:
         update = json.loads(event.get('body', '{}'))
@@ -567,7 +577,10 @@ def ok_response():
     '''Стандартный ответ'''
     return {
         'statusCode': 200,
-        'headers': {'Content-Type': 'application/json'},
+        'headers': {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+        },
         'body': json.dumps({'ok': True}),
         'isBase64Encoded': False
     }
