@@ -18,6 +18,12 @@ def handler(event: dict, context) -> dict:
     
     method = event.get('httpMethod', 'GET')
     query_params = event.get('queryStringParameters', {})
+    body_data = {}
+    if method == 'POST':
+        try:
+            body_data = json.loads(event.get('body', '{}'))
+        except:
+            body_data = {}
     
     if method == 'GET' and event.get('queryStringParameters', {}).get('debug_secrets') == '1':
         secrets = {
@@ -58,7 +64,17 @@ def handler(event: dict, context) -> dict:
         }
     
     request_id = query_params.get('request_id')
-    action = query_params.get('action')
+    action = query_params.get('action') or body_data.get('action')
+    
+    if action == 'upload_image':
+        from storage import upload_image_to_s3
+        image_url = upload_image_to_s3(body_data['image_base64'], body_data.get('image_name', 'image.jpg'))
+        return {
+            'statusCode': 200,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'success': True, 'image_url': image_url}),
+            'isBase64Encoded': False
+        }
     
     try:
         conn = psycopg2.connect(dsn)

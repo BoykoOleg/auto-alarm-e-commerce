@@ -79,6 +79,14 @@ export const AdminWorksManagement = ({ isLoading, onRefresh }: AdminWorksManagem
   }
 
   const removeGalleryImage = (index: number) => {
+    const isExistingImage = editingWork?.gallery_urls && index < editingWork.gallery_urls.length
+    
+    if (isExistingImage) {
+      const newGalleryUrls = [...(editingWork.gallery_urls || [])]
+      newGalleryUrls.splice(index, 1)
+      setEditingWork(prev => prev ? { ...prev, gallery_urls: newGalleryUrls } : null)
+    }
+    
     setGalleryPreviews(prev => prev.filter((_, i) => i !== index))
     setGalleryFiles(prev => prev.filter((_, i) => i !== index))
   }
@@ -104,9 +112,11 @@ export const AdminWorksManagement = ({ isLoading, onRefresh }: AdminWorksManagem
       data.gallery_urls = []
     }
 
+    const existingUrls = editingWork?.gallery_urls || []
+    const newUrls: string[] = []
+
     if (galleryFiles.length > 0) {
       const token = localStorage.getItem('authToken')
-      const uploadedUrls: string[] = []
 
       for (const file of galleryFiles) {
         try {
@@ -117,9 +127,7 @@ export const AdminWorksManagement = ({ isLoading, onRefresh }: AdminWorksManagem
               'Authorization': `Bearer ${token}`,
             },
             body: JSON.stringify({
-              action: 'create_content',
-              type: 'works',
-              title: 'temp',
+              action: 'upload_image',
               image_base64: file.base64,
               image_name: file.name,
             }),
@@ -128,17 +136,17 @@ export const AdminWorksManagement = ({ isLoading, onRefresh }: AdminWorksManagem
           if (uploadRes.ok) {
             const result = await uploadRes.json()
             if (result.image_url) {
-              uploadedUrls.push(result.image_url)
+              newUrls.push(result.image_url)
             }
           }
         } catch (error) {
           console.error('Ошибка загрузки фото:', error)
         }
       }
-
-      data.gallery_urls = [...(editingWork?.gallery_urls || []), ...uploadedUrls].slice(0, 10)
-      data.image_url = data.gallery_urls[0]
     }
+
+    data.gallery_urls = [...existingUrls, ...newUrls].slice(0, 10)
+    data.image_url = data.gallery_urls[0] || null
 
     const token = localStorage.getItem('authToken')
     const action = editingWork ? 'update_content' : 'create_content'
@@ -192,7 +200,7 @@ export const AdminWorksManagement = ({ isLoading, onRefresh }: AdminWorksManagem
 
   const openEditDialog = (work?: Work) => {
     if (work) {
-      setEditingWork(work)
+      setEditingWork({ ...work })
       setGalleryPreviews(work.gallery_urls || [])
     } else {
       setEditingWork(null)
