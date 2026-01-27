@@ -63,7 +63,7 @@ def handle_message(message: dict):
     user_id = message['from']['id']
     first_name = message['from'].get('first_name', 'друг')
     
-    if text == '/start':
+    if text == '/start' or text == '🚀 Начать':
         send_welcome(chat_id, user_id, first_name)
     elif text.startswith('/'):
         return
