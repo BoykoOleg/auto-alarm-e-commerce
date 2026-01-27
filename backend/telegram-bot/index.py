@@ -371,15 +371,24 @@ def send_message(chat_id: int, text: str, keyboard=None):
         if keyboard:
             data['reply_markup'] = keyboard
         
+        print(f"Sending message to {chat_id}: {text[:50]}...")
+        print(f"Keyboard: {json.dumps(keyboard) if keyboard else 'None'}")
+        
         req = urllib.request.Request(
             url,
             data=json.dumps(data).encode('utf-8'),
             headers={'Content-Type': 'application/json'}
         )
         
-        urllib.request.urlopen(req)
+        response = urllib.request.urlopen(req)
+        print(f"Message sent successfully")
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode('utf-8')
+        print(f"Send message HTTP error {e.code}: {error_body}")
     except Exception as e:
         print(f"Send message error: {e}")
+        import traceback
+        print(traceback.format_exc())
 
 def edit_message(chat_id: int, message_id: int, text: str, keyboard=None):
     '''Редактирование сообщения'''
