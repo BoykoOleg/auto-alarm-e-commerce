@@ -65,8 +65,11 @@ def handle_message(message: dict) -> dict:
     username = message['from'].get('username', '')
     first_name = message['from'].get('first_name', 'Пользователь')
     
+    print(f"Received message: text='{text}', chat_id={chat_id}, user_id={user_id}")
+    
     # Команды
     if text == '/start':
+        print(f"Processing /start command for user {user_id}")
         return send_welcome(chat_id, first_name)
     elif text == '/new':
         return start_new_request(chat_id, user_id)
@@ -94,7 +97,7 @@ def handle_message(message: dict) -> dict:
 
 def send_welcome(chat_id: int, first_name: str) -> dict:
     '''Приветственное сообщение'''
-    text = f"""👋 Привет, {first_name}!
+    text = f"""Привет, {first_name}!
 
 Я бот автосервиса "Химчистка". Помогу оставить заявку на услуги.
 
@@ -103,14 +106,15 @@ def send_welcome(chat_id: int, first_name: str) -> dict:
 /my - Мои заявки
 /cancel - Отменить текущее действие
 
-Нажми /new чтобы начать! 🚗"""
+Нажми /new чтобы начать!"""
     
+    print(f"Sending welcome to chat_id={chat_id}, first_name={first_name}")
     return send_message(chat_id, text)
 
 
 def send_help(chat_id: int) -> dict:
     '''Справка'''
-    text = """❓ Доступные команды:
+    text = """Доступные команды:
 
 /new - Создать новую заявку
 /my - Посмотреть мои заявки
