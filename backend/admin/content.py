@@ -40,7 +40,7 @@ def handle_get_content(cur, content_type: str) -> dict:
     try:
         if content_type == 'works':
             cur.execute("""
-                SELECT id, title, description, category, image_url, price, 
+                SELECT id, title, description, category, image_url, gallery_urls, price, 
                        is_active, display_order, created_at, updated_at
                 FROM portfolio_works
                 ORDER BY display_order ASC, created_at DESC
@@ -91,15 +91,20 @@ def handle_create_content(cur, conn, body: dict) -> dict:
             image_url = upload_image_to_s3(body['image_base64'], body.get('image_name', 'image.jpg'))
         
         if content_type == 'works':
+            gallery_urls = body.get('gallery_urls', [])
+            if image_url and image_url not in gallery_urls:
+                gallery_urls.insert(0, image_url)
+            
             cur.execute("""
-                INSERT INTO portfolio_works (title, description, category, image_url, price, display_order)
-                VALUES (%s, %s, %s, %s, %s, %s)
+                INSERT INTO portfolio_works (title, description, category, image_url, gallery_urls, price, display_order)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
                 RETURNING id
             """, (
                 body['title'],
                 body.get('description'),
                 body.get('category'),
-                image_url,
+                gallery_urls[0] if gallery_urls else None,
+                gallery_urls if gallery_urls else None,
                 body.get('price'),
                 body.get('display_order', 0)
             ))
@@ -167,16 +172,21 @@ def handle_update_content(cur, conn, body: dict) -> dict:
             image_url = upload_image_to_s3(body['image_base64'], body.get('image_name', 'image.jpg'))
         
         if content_type == 'works':
+            gallery_urls = body.get('gallery_urls', [])
+            if image_url and image_url not in gallery_urls:
+                gallery_urls.insert(0, image_url)
+            
             cur.execute("""
                 UPDATE portfolio_works 
                 SET title = %s, description = %s, category = %s, 
-                    image_url = %s, price = %s, is_active = %s, display_order = %s
+                    image_url = %s, gallery_urls = %s, price = %s, is_active = %s, display_order = %s
                 WHERE id = %s
             """, (
                 body['title'],
                 body.get('description'),
                 body.get('category'),
-                image_url,
+                gallery_urls[0] if gallery_urls else image_url,
+                gallery_urls if gallery_urls else None,
                 body.get('price'),
                 body.get('is_active', True),
                 body.get('display_order', 0),
