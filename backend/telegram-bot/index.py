@@ -613,7 +613,7 @@ def create_request_in_db(user_id, name, phone, email, car, car_year, car_plate, 
             INSERT INTO russification_requests
             (user_id, client_name, client_phone, client_email, car_brand, car_model,
              car_year, car_plate, service_type, description, status, created_at)
-            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'other', %s, 'pending', NOW())
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'multimedia', %s, 'pending', NOW())
             RETURNING id
         """, (user_id, name, phone, email, car_brand, car_model, car_year, car_plate, message))
 
