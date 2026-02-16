@@ -54,10 +54,12 @@ export const AdminPartnersTab = ({
                             <Icon name="Phone" className="h-3 w-3 inline mr-1" />
                             {user.phone}
                           </span>
-                          <span className="text-muted-foreground break-all">
-                            <Icon name="Mail" className="h-3 w-3 inline mr-1" />
-                            {user.email}
-                          </span>
+                          {user.email && user.email !== '' && (
+                            <span className="text-muted-foreground break-all">
+                              <Icon name="Mail" className="h-3 w-3 inline mr-1" />
+                              {user.email}
+                            </span>
+                          )}
                         </div>
                       </div>
                       <div className="text-right mt-3 sm:mt-0">

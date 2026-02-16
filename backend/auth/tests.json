@@ -10,23 +10,17 @@
       }
     },
     {
-      "name": "Login as admin",
+      "name": "Login with empty fields",
       "method": "POST",
       "path": "/",
       "body": {
         "action": "login",
-        "email": "admin@divisionauto.ru",
-        "password": "admin123"
+        "phone": "",
+        "password": ""
       },
-      "expectedStatus": 200,
+      "expectedStatus": 400,
       "expectedBody": {
-        "success": true,
-        "token": "string",
-        "user": {
-          "email": "admin@divisionauto.ru",
-          "name": "Admin",
-          "user_role": "admin"
-        }
+        "success": false
       },
       "bodyMatcher": "partial"
     }

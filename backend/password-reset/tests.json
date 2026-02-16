@@ -1,7 +1,7 @@
 {
   "tests": [
     {
-      "name": "Test password reset request with missing email",
+      "name": "Test password reset request with missing phone",
       "method": "POST",
       "body": "{\"action\": \"request\"}",
       "expectedStatus": 400,
@@ -13,7 +13,7 @@
     {
       "name": "Test password reset request success",
       "method": "POST",
-      "body": "{\"action\": \"request\", \"email\": \"test@example.com\"}",
+      "body": "{\"action\": \"request\", \"phone\": \"+79991234567\"}",
       "expectedStatus": 200,
       "expectedBody": {
         "message": "string"

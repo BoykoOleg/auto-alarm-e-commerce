@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import Icon from '@/components/ui/icon'
+const AUTH_URL = 'https://functions.poehali.dev/aa3aea15-0141-490d-aa72-389642c2efc3'
 
 interface LoginSectionProps {
   setActiveSection: (section: string) => void
@@ -24,16 +25,14 @@ export const LoginSection = ({ setActiveSection, onLoginSuccess }: LoginSectionP
 
     const formElement = e.target as HTMLFormElement
     const formData = {
-      email: (formElement.elements.namedItem('email') as HTMLInputElement).value,
+      phone: (formElement.elements.namedItem('phone') as HTMLInputElement).value,
       password: (formElement.elements.namedItem('password') as HTMLInputElement).value,
     }
 
     try {
-      const response = await fetch('https://functions.poehali.dev/aa3aea15-0141-490d-aa72-389642c2efc3', {
+      const response = await fetch(AUTH_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'login', ...formData }),
       })
 
@@ -47,7 +46,7 @@ export const LoginSection = ({ setActiveSection, onLoginSuccess }: LoginSectionP
         setTimeout(() => setActiveSection('dashboard'), 1000)
       } else {
         setSubmitStatus('error')
-        setErrorMessage(result.message || 'Неверный email или пароль')
+        setErrorMessage(result.message || 'Неверный телефон или пароль')
       }
     } catch (error) {
       setSubmitStatus('error')
@@ -66,18 +65,15 @@ export const LoginSection = ({ setActiveSection, onLoginSuccess }: LoginSectionP
     const formElement = e.target as HTMLFormElement
     const formData = {
       name: (formElement.elements.namedItem('name') as HTMLInputElement).value,
-      email: (formElement.elements.namedItem('reg-email') as HTMLInputElement).value,
-      phone: (formElement.elements.namedItem('phone') as HTMLInputElement).value,
+      phone: (formElement.elements.namedItem('reg-phone') as HTMLInputElement).value,
       company_name: (formElement.elements.namedItem('company') as HTMLInputElement).value,
       password: (formElement.elements.namedItem('reg-password') as HTMLInputElement).value,
     }
 
     try {
-      const response = await fetch('https://functions.poehali.dev/aa3aea15-0141-490d-aa72-389642c2efc3', {
+      const response = await fetch(AUTH_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'register', ...formData }),
       })
 
@@ -132,18 +128,18 @@ export const LoginSection = ({ setActiveSection, onLoginSuccess }: LoginSectionP
                 <CardHeader>
                   <CardTitle>Войти в систему</CardTitle>
                   <CardDescription>
-                    Введите email и пароль для входа
+                    Введите номер телефона и пароль для входа
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <form onSubmit={handleLogin} className="space-y-4">
                     <div>
-                      <Label htmlFor="email">Email</Label>
+                      <Label htmlFor="phone">Телефон</Label>
                       <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        placeholder="partner@example.com"
+                        id="phone"
+                        name="phone"
+                        type="tel"
+                        placeholder="+7 (999) 123-45-67"
                         required
                       />
                     </div>
@@ -217,22 +213,12 @@ export const LoginSection = ({ setActiveSection, onLoginSuccess }: LoginSectionP
                       />
                     </div>
                     <div>
-                      <Label htmlFor="phone">Телефон</Label>
+                      <Label htmlFor="reg-phone">Телефон</Label>
                       <Input
-                        id="phone"
-                        name="phone"
+                        id="reg-phone"
+                        name="reg-phone"
                         type="tel"
-                        placeholder="+7 (___) ___-__-__"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="reg-email">Email</Label>
-                      <Input
-                        id="reg-email"
-                        name="reg-email"
-                        type="email"
-                        placeholder="partner@example.com"
+                        placeholder="+7 (999) 123-45-67"
                         required
                       />
                     </div>
@@ -243,8 +229,8 @@ export const LoginSection = ({ setActiveSection, onLoginSuccess }: LoginSectionP
                         name="reg-password"
                         type="password"
                         placeholder="Минимум 6 символов"
-                        minLength={6}
                         required
+                        minLength={6}
                       />
                     </div>
 
@@ -276,3 +262,5 @@ export const LoginSection = ({ setActiveSection, onLoginSuccess }: LoginSectionP
     </section>
   )
 }
+
+export default LoginSection

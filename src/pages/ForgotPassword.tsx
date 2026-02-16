@@ -6,9 +6,11 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import Icon from "@/components/ui/icon";
 
+const RESET_URL = "https://functions.poehali.dev/853ae20f-b562-4446-a8c4-2631f2311321";
+
 const ForgotPassword = () => {
-  const [step, setStep] = useState<"email" | "code">("email");
-  const [email, setEmail] = useState("");
+  const [step, setStep] = useState<"phone" | "code">("phone");
+  const [phone, setPhone] = useState("");
   const [code, setCode] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -16,24 +18,16 @@ const ForgotPassword = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleEmailSubmit = async (e: React.FormEvent) => {
+  const handlePhoneSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const response = await fetch(
-        "https://functions.poehali.dev/853ae20f-b562-4446-a8c4-2631f2311321",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            action: "request",
-            email: email,
-          }),
-        }
-      );
+      const response = await fetch(RESET_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "request", phone }),
+      });
 
       const data = await response.json();
 
@@ -85,20 +79,11 @@ const ForgotPassword = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(
-        "https://functions.poehali.dev/853ae20f-b562-4446-a8c4-2631f2311321",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            action: "confirm",
-            code: code,
-            password: password,
-          }),
-        }
-      );
+      const response = await fetch(RESET_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "confirm", code, password }),
+      });
 
       const data = await response.json();
 
@@ -134,9 +119,9 @@ const ForgotPassword = () => {
         <div className="mb-8 text-center">
           <Icon name="KeyRound" size={48} className="mx-auto mb-4 text-blue-600" />
           <h1 className="text-3xl font-bold mb-2">Восстановление пароля</h1>
-          {step === "email" ? (
+          {step === "phone" ? (
             <p className="text-gray-600">
-              Введите email - код восстановления будет отправлен администратору
+              Введите номер телефона — код восстановления будет отправлен администратору
             </p>
           ) : (
             <p className="text-gray-600">
@@ -145,16 +130,16 @@ const ForgotPassword = () => {
           )}
         </div>
 
-        {step === "email" ? (
-          <form onSubmit={handleEmailSubmit} className="space-y-6">
+        {step === "phone" ? (
+          <form onSubmit={handlePhoneSubmit} className="space-y-6">
             <div>
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="phone">Номер телефона</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="your@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="phone"
+                type="tel"
+                placeholder="+7 (999) 123-45-67"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
                 required
                 className="mt-2"
               />
@@ -239,7 +224,7 @@ const ForgotPassword = () => {
             <div className="text-center text-sm space-y-2">
               <button
                 type="button"
-                onClick={() => setStep("email")}
+                onClick={() => setStep("phone")}
                 className="text-blue-600 hover:underline block w-full"
               >
                 Запросить новый код

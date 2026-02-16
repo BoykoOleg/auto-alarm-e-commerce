@@ -75,8 +75,6 @@ def handle_message(message: dict):
             process_reg_name(chat_id, user_id, text)
         elif step == 'waiting_reg_phone':
             process_reg_phone(chat_id, user_id, text)
-        elif step == 'waiting_reg_email':
-            process_reg_email(chat_id, user_id, text)
         elif step == 'waiting_name':
             process_name(chat_id, user_id, text)
         elif step == 'waiting_phone':
@@ -154,29 +152,29 @@ def process_reg_name(chat_id: int, user_id: int, name: str):
     keyboard = get_cancel_button()
     send_message(chat_id, "📱 Укажите номер телефона:", keyboard)
 
-def process_reg_phone(chat_id: int, user_id: int, phone: str):
-    '''Обработка телефона при регистрации'''
-    if len(phone) < 10:
-        send_message(chat_id, "❌ Некорректный номер. Введите номер телефона:")
-        return
-    
-    user_states[user_id]['phone'] = phone
-    user_states[user_id]['step'] = 'waiting_reg_email'
-    
-    keyboard = get_cancel_button()
-    send_message(chat_id, "📧 Укажите email для входа в личный кабинет:", keyboard)
+def normalize_phone(phone: str) -> str:
+    '''Нормализация телефона — только цифры, формат 7XXXXXXXXXX'''
+    digits = ''.join(c for c in phone if c.isdigit())
+    if len(digits) == 10:
+        digits = '7' + digits
+    if len(digits) == 11 and digits[0] == '8':
+        digits = '7' + digits[1:]
+    return digits
 
-def process_reg_email(chat_id: int, user_id: int, email: str):
-    '''Завершение регистрации'''
-    if '@' not in email or '.' not in email:
-        send_message(chat_id, "❌ Некорректный email. Введите действительный email:")
+def process_reg_phone(chat_id: int, user_id: int, phone: str):
+    '''Обработка телефона и завершение регистрации'''
+    normalized = normalize_phone(phone)
+    if len(normalized) != 11:
+        send_message(chat_id, "❌ Некорректный номер. Введите номер телефона (например, +7 999 123-45-67):")
         return
     
     state = user_states.get(user_id, {})
     name = state.get('name')
-    phone = state.get('phone')
     
-    success = register_user(user_id, None, name, phone, email)
+    import secrets as sec
+    password = sec.token_urlsafe(8)
+    
+    success = register_user(user_id, name, normalized, password)
     
     if success:
         if user_id in user_states:
@@ -187,10 +185,11 @@ def process_reg_email(chat_id: int, user_id: int, email: str):
             [{'text': '🌐 Перейти на сайт', 'web_app': {'url': site_url}}]
         ]
         
-        text = f"✅ Регистрация завершена!\n\n👤 Имя: {name}\n📱 Телефон: {phone}\n📧 Email: {email}\n\n🔐 Пароль для входа отправлен на email."
-        send_message(chat_id, text, {'inline_keyboard': buttons})
+        formatted_phone = f"+7 ({normalized[1:4]}) {normalized[4:7]}-{normalized[7:9]}-{normalized[9:11]}"
+        text = f"✅ Регистрация завершена!\n\n👤 Имя: {name}\n📱 Телефон: {formatted_phone}\n\n🔐 Ваш пароль для входа на сайт:\n<code>{password}</code>\n\n⚠️ Сохраните пароль! Он нужен для входа в личный кабинет."
+        send_message(chat_id, text, {'inline_keyboard': buttons}, parse_mode='HTML')
     else:
-        send_message(chat_id, "❌ Ошибка регистрации. Возможно, email уже используется.\n\n/start - Вернуться в меню")
+        send_message(chat_id, "❌ Ошибка регистрации. Возможно, этот номер уже зарегистрирован.\n\n/start - Вернуться в меню")
         if user_id in user_states:
             del user_states[user_id]
 
@@ -374,7 +373,7 @@ def get_cancel_button():
         ]
     }
 
-def send_message(chat_id: int, text: str, keyboard=None):
+def send_message(chat_id: int, text: str, keyboard=None, parse_mode=None):
     '''Отправка сообщения'''
     try:
         url = f'https://api.telegram.org/bot{bot_token}/sendMessage'
@@ -383,6 +382,9 @@ def send_message(chat_id: int, text: str, keyboard=None):
             'chat_id': chat_id,
             'text': text
         }
+        
+        if parse_mode:
+            data['parse_mode'] = parse_mode
         
         if keyboard:
             data['reply_markup'] = keyboard
@@ -468,22 +470,22 @@ def get_user_by_telegram(telegram_id: int):
     except:
         return None
 
-def register_user(telegram_id: int, telegram_username: str, name: str, phone: str, email: str):
-    '''Регистрация пользователя'''
+def register_user(telegram_id: int, name: str, phone: str, password: str):
+    '''Регистрация пользователя по телефону'''
     try:
         dsn = os.environ.get('DATABASE_URL')
         conn = psycopg2.connect(dsn)
         cur = conn.cursor()
         
-        import secrets
-        temp_password = secrets.token_urlsafe(12)
+        import hashlib
+        password_hash = hashlib.sha256(password.encode()).hexdigest()
         
         cur.execute("""
-            INSERT INTO users (telegram_id, telegram_username, name, email, phone, 
+            INSERT INTO users (telegram_id, name, email, phone, 
                              password_hash, user_type, user_role)
-            VALUES (%s, %s, %s, %s, %s, %s, 'client', 'user')
+            VALUES (%s, %s, %s, %s, %s, 'client', 'user')
             RETURNING id
-        """, (telegram_id, telegram_username, name, email, phone, temp_password))
+        """, (telegram_id, name, '', phone, password_hash))
         
         conn.commit()
         cur.close()

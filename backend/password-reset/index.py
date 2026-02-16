@@ -7,7 +7,7 @@ import hashlib
 import psycopg2
 
 def handler(event: dict, context) -> dict:
-    '''Восстановление пароля: запрос и установка нового пароля'''
+    '''Восстановление пароля по номеру телефона'''
     
     method = event.get('httpMethod', 'GET')
     
@@ -64,16 +64,26 @@ def handler(event: dict, context) -> dict:
         }
 
 
+def normalize_phone(phone: str) -> str:
+    digits = ''.join(c for c in phone if c.isdigit())
+    if len(digits) == 10:
+        digits = '7' + digits
+    if len(digits) == 11 and digits[0] == '8':
+        digits = '7' + digits[1:]
+    return digits
+
+
 def handle_request(data: dict) -> dict:
     '''Отправка кода восстановления через Telegram'''
     
-    email = data.get('email', '').strip().lower()
+    phone_raw = data.get('phone', '').strip()
+    phone = normalize_phone(phone_raw)
     
-    if not email:
+    if not phone or len(phone) != 11:
         return {
             'statusCode': 400,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'error': 'Email обязателен'}),
+            'body': json.dumps({'error': 'Введите корректный номер телефона'}),
             'isBase64Encoded': False
         }
     
@@ -81,8 +91,8 @@ def handle_request(data: dict) -> dict:
     conn = psycopg2.connect(dsn)
     cur = conn.cursor()
     
-    email_escaped = email.replace("'", "''")
-    cur.execute(f"SELECT id, email, name FROM users WHERE email = '{email_escaped}'")
+    phone_escaped = phone.replace("'", "''")
+    cur.execute(f"SELECT id, phone, name FROM users WHERE phone = '{phone_escaped}'")
     user = cur.fetchone()
     
     if not user:
@@ -91,11 +101,11 @@ def handle_request(data: dict) -> dict:
         return {
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-            'body': json.dumps({'message': 'Если email существует, код отправлен'}),
+            'body': json.dumps({'message': 'Если номер зарегистрирован, код отправлен'}),
             'isBase64Encoded': False
         }
     
-    user_id, user_email, user_name = user
+    user_id, user_phone, user_name = user
     
     code = ''.join([str(secrets.randbelow(10)) for _ in range(6)])
     expires_at = datetime.now() + timedelta(minutes=15)
@@ -108,11 +118,13 @@ def handle_request(data: dict) -> dict:
     bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
     chat_id = os.environ.get('TELEGRAM_CHAT_ID')
     
+    formatted = f"+7 ({phone[1:4]}) {phone[4:7]}-{phone[7:9]}-{phone[9:11]}"
+    
     if bot_token and chat_id:
         message = f"""🔐 <b>Восстановление пароля</b>
 
 👤 Пользователь: {user_name}
-📧 Email: {user_email}
+📱 Телефон: {formatted}
 
 <b>Код восстановления: {code}</b>
 
