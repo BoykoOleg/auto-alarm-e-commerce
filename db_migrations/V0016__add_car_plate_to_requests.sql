@@ -1,0 +1,1 @@
+ALTER TABLE russification_requests ADD COLUMN IF NOT EXISTS car_plate VARCHAR(20) DEFAULT '';

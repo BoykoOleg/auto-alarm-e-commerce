@@ -77,6 +77,10 @@ def handle_message(message: dict):
         process_reg_name(chat_id, user_id, text)
     elif step == 'waiting_car':
         process_car(chat_id, user_id, text)
+    elif step == 'waiting_car_year':
+        process_car_year(chat_id, user_id, text)
+    elif step == 'waiting_car_plate':
+        process_car_plate(chat_id, user_id, text)
     elif step == 'waiting_message':
         process_message_text(chat_id, user_id, text)
 
@@ -323,12 +327,42 @@ def start_new_request(chat_id: int, message_id: int, user_id: int):
 
 
 def process_car(chat_id: int, user_id: int, car: str):
-    '''Обработка автомобиля'''
+    '''Обработка автомобиля (марка и модель)'''
     if len(car.strip()) < 2:
         send_message(chat_id, "❌ Укажите марку и модель автомобиля:")
         return
 
     user_states[user_id]['car'] = car.strip()
+    user_states[user_id]['step'] = 'waiting_car_year'
+
+    send_message(chat_id, "📅 Укажите год выпуска автомобиля:", get_cancel_button())
+
+
+def process_car_year(chat_id: int, user_id: int, year_text: str):
+    '''Обработка года выпуска'''
+    year_text = year_text.strip()
+    if not year_text.isdigit() or len(year_text) != 4:
+        send_message(chat_id, "❌ Введите год в формате ГГГГ (например: 2020):")
+        return
+
+    year = int(year_text)
+    if year < 1990 or year > 2030:
+        send_message(chat_id, "❌ Введите корректный год (1990–2030):")
+        return
+
+    user_states[user_id]['car_year'] = year
+    user_states[user_id]['step'] = 'waiting_car_plate'
+
+    send_message(chat_id, "🔢 Укажите гос. номер автомобиля:", get_cancel_button())
+
+
+def process_car_plate(chat_id: int, user_id: int, plate: str):
+    '''Обработка гос. номера'''
+    if len(plate.strip()) < 3:
+        send_message(chat_id, "❌ Введите гос. номер автомобиля:")
+        return
+
+    user_states[user_id]['car_plate'] = plate.strip().upper()
     user_states[user_id]['step'] = 'waiting_message'
 
     send_message(chat_id, "💬 Опишите проблему или нужную услугу:", get_cancel_button())
@@ -351,6 +385,8 @@ def process_message_text(chat_id: int, user_id: int, message_text: str):
         user_db_id = None
 
     car = state.get('car', 'Не указан')
+    car_year = state.get('car_year')
+    car_plate = state.get('car_plate', '')
 
     request_id = create_request_in_db(
         user_id=user_db_id,
@@ -358,11 +394,18 @@ def process_message_text(chat_id: int, user_id: int, message_text: str):
         phone=phone,
         email=email,
         car=car,
+        car_year=car_year,
+        car_plate=car_plate,
         message=message_text
     )
 
     if request_id:
-        notify_admin_new_request(request_id, name, phone, car, message_text)
+        car_full = car
+        if car_year:
+            car_full += f" ({car_year})"
+        if car_plate:
+            car_full += f", {car_plate}"
+        notify_admin_new_request(request_id, name, phone, car_full, message_text)
 
         if user_id in user_states:
             del user_states[user_id]
@@ -572,7 +615,7 @@ def register_user(telegram_id: int, name: str, phone: str, password: str):
         return False
 
 
-def create_request_in_db(user_id, name, phone, email, car, message):
+def create_request_in_db(user_id, name, phone, email, car, car_year, car_plate, message):
     '''Создание заявки в БД'''
     try:
         conn = get_db()
@@ -585,10 +628,10 @@ def create_request_in_db(user_id, name, phone, email, car, message):
         cur.execute("""
             INSERT INTO russification_requests
             (user_id, client_name, client_phone, client_email, car_brand, car_model,
-             service_type, description, status, created_at)
-            VALUES (%s, %s, %s, %s, %s, %s, 'other', %s, 'pending', NOW())
+             car_year, car_plate, service_type, description, status, created_at)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, 'other', %s, 'pending', NOW())
             RETURNING id
-        """, (user_id, name, phone, email, car_brand, car_model, message))
+        """, (user_id, name, phone, email, car_brand, car_model, car_year, car_plate, message))
 
         request_id = cur.fetchone()[0]
         conn.commit()
