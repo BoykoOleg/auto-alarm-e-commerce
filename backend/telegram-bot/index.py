@@ -106,16 +106,19 @@ def handle_callback(callback: dict):
     
     answer_callback(callback['id'])
 
+def get_welcome_text(user_data=None, first_name='друг'):
+    '''Единый текст приветствия'''
+    if user_data:
+        return f"👋 С возвращением, {user_data['name']}!\n\n🚗 Я бот установочного центра \"SmartLine\" готов помочь.\n\nВыберите действие:"
+    else:
+        return f"👋 Привет, {first_name}!\n\n🚗 Я бот установочного центра \"SmartLine\".\n\n📌 Я помогу:\n• Оставить заявку на русификацию\n• Следить за статусом заявок\n• Получать уведомления\n\nВыберите действие:"
+
 def send_welcome(chat_id: int, user_id: int, first_name: str):
     '''Приветственное сообщение'''
     user_data = get_user_by_telegram(user_id)
     is_registered = user_data is not None
     
-    if is_registered:
-        text = f"👋 С возвращением, {user_data['name']}!\n\n🚗 Я бот установчного центра \"SmartLine\" готов помочь.\n\nВыберите действие:"
-    else:
-        text = f"👋 Привет, {first_name}!\n\n🚗 Я бот установчного центра \"SmartLine\".\n\n📌 Я помогу:\n• Оставить заявку на русификацию\n• Следить за статусом заявок\n• Получать уведомления\n\nВыберите действие:"
-    
+    text = get_welcome_text(user_data, first_name)
     keyboard = get_main_menu(is_registered)
     send_message(chat_id, text, keyboard)
 
@@ -127,11 +130,7 @@ def back_to_menu(chat_id: int, message_id: int, user_id: int):
     user_data = get_user_by_telegram(user_id)
     is_registered = user_data is not None
     
-    if is_registered:
-        text = f"👋 С возвращением, {user_data['name']}!\n\n🚗 Я бот установчного центра \"SmartLine\" готов помочь.\n\nВыберите действие:"
-    else:
-        text = "👋 Главное меню\n\n🚗 Я бот установчного центра \"SmartLine".\n\nВыберите действие:"
-    
+    text = get_welcome_text(user_data)
     keyboard = get_main_menu(is_registered)
     edit_message(chat_id, message_id, text, keyboard)
 
