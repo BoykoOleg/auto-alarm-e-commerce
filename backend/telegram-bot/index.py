@@ -61,7 +61,7 @@ def handle_message(message: dict):
         process_shared_contact(chat_id, user_id, contact, first_name)
         return
 
-    if text == '/start':
+    if text == '/start' or text == '🚀 Начать':
         handle_start(chat_id, user_id, first_name)
         return
 
@@ -234,7 +234,7 @@ def get_registered_menu():
         'inline_keyboard': [
             [{'text': '🆕 Создать заявку', 'callback_data': 'new_request'}],
             [{'text': '📋 Мои заявки', 'callback_data': 'my_requests'}],
-            [{'text': '🌐 Открыть сайт', 'url': site_url}]
+            [{'text': '🌐 Открыть сайт', 'web_app': {'url': site_url}}]
         ]
     }
 
@@ -371,7 +371,7 @@ def process_message_text(chat_id: int, user_id: int, message_text: str):
             'inline_keyboard': [
                 [{'text': '🆕 Создать ещё заявку', 'callback_data': 'new_request'}],
                 [{'text': '📋 Мои заявки', 'callback_data': 'my_requests'}],
-                [{'text': '🌐 Открыть сайт', 'url': site_url}]
+                [{'text': '🌐 Открыть сайт', 'web_app': {'url': site_url}}]
             ]
         }
 
