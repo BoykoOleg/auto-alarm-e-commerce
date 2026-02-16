@@ -483,7 +483,7 @@ def register_user(telegram_id: int, name: str, phone: str, password: str):
         cur.execute("""
             INSERT INTO users (telegram_id, name, email, phone, 
                              password_hash, user_type, user_role)
-            VALUES (%s, %s, %s, %s, %s, 'client', 'user')
+            VALUES (%s, %s, %s, %s, %s, 'client', 'partner')
             RETURNING id
         """, (telegram_id, name, '', phone, password_hash))
         
