@@ -35,7 +35,7 @@ export const DashboardStatsCards = ({ userData, requests, works }: DashboardStat
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-2">
-            <Icon name="Clock" className="h-8 w-8 text-blue-500" />
+            <Icon name="Clock" className="h-8 w-8 text-yellow-500" />
             <div>
               <p className="text-3xl font-bold">
                 {requests.filter(r => r.status === 'pending' || r.status === 'in_progress').length}

@@ -37,7 +37,7 @@ export const AdminStatsCards = ({ stats }: AdminStatsCardsProps) => {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-2xl font-bold text-blue-600">{stats.pendingRequests}</p>
+          <p className="text-2xl font-bold text-yellow-600">{stats.pendingRequests}</p>
         </CardContent>
       </Card>
 

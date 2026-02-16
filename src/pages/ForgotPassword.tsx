@@ -114,10 +114,10 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-amber-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-xl p-8">
         <div className="mb-8 text-center">
-          <Icon name="KeyRound" size={48} className="mx-auto mb-4 text-blue-600" />
+          <Icon name="KeyRound" size={48} className="mx-auto mb-4 text-yellow-600" />
           <h1 className="text-3xl font-bold mb-2">Восстановление пароля</h1>
           {step === "phone" ? (
             <p className="text-gray-600">
@@ -160,7 +160,7 @@ const ForgotPassword = () => {
             </Button>
 
             <div className="text-center text-sm">
-              <Link to="/" className="text-blue-600 hover:underline">
+              <Link to="/" className="text-yellow-600 hover:underline">
                 Вернуться на главную
               </Link>
             </div>
@@ -225,11 +225,11 @@ const ForgotPassword = () => {
               <button
                 type="button"
                 onClick={() => setStep("phone")}
-                className="text-blue-600 hover:underline block w-full"
+                className="text-yellow-600 hover:underline block w-full"
               >
                 Запросить новый код
               </button>
-              <Link to="/" className="text-blue-600 hover:underline block">
+              <Link to="/" className="text-yellow-600 hover:underline block">
                 Вернуться на главную
               </Link>
             </div>

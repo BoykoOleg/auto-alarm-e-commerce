@@ -23,7 +23,7 @@ export const AboutSection = () => {
           <Card className="mb-8 animate-fade-in">
             <CardHeader>
               <CardTitle className="font-heading text-2xl">
-                DivisionAuto - ваш эксперт по русификации
+                Smartline - ваш эксперт по русификации
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4 text-muted-foreground">

@@ -82,10 +82,10 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-amber-100 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-xl p-8">
         <div className="mb-8 text-center">
-          <Icon name="Lock" size={48} className="mx-auto mb-4 text-blue-600" />
+          <Icon name="Lock" size={48} className="mx-auto mb-4 text-yellow-600" />
           <h1 className="text-3xl font-bold mb-2">Новый пароль</h1>
           <p className="text-gray-600">Введите новый пароль для вашего аккаунта</p>
         </div>
@@ -146,7 +146,7 @@ const ResetPassword = () => {
           </Button>
 
           <div className="text-center text-sm">
-            <Link to="/" className="text-blue-600 hover:underline">
+            <Link to="/" className="text-yellow-600 hover:underline">
               Вернуться на главную
             </Link>
           </div>

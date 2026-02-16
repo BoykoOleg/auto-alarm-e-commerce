@@ -15,7 +15,7 @@ export const Footer = ({ setActiveSection }: FooterProps) => {
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
                 <Icon name="Shield" className="h-6 w-6 text-primary-foreground" />
               </div>
-              <span className="font-heading text-xl font-bold">DivisionAuto</span>
+              <span className="font-heading text-xl font-bold">Smartline</span>
             </div>
             <p className="text-sm text-muted-foreground">
               Русификация и защита вашего автомобиля
@@ -63,7 +63,7 @@ export const Footer = ({ setActiveSection }: FooterProps) => {
 
         <div className="border-t pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">
-            © 2024 DivisionAuto. Все права защищены.
+            © 2024 Smartline. Все права защищены.
           </p>
           <div className="flex gap-4">
             <Button variant="ghost" size="icon">

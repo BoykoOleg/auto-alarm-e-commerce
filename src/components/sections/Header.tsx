@@ -30,7 +30,7 @@ export const Header = ({ activeSection, setActiveSection, isAuthenticated }: Hea
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
             <Icon name="Shield" className="h-6 w-6 text-primary-foreground" />
           </div>
-          <span className="font-heading text-xl font-bold">DivisionAuto</span>
+          <span className="font-heading text-xl font-bold">Smartline</span>
         </div>
         
         <nav className="hidden md:flex items-center gap-6">
@@ -122,7 +122,7 @@ export const Header = ({ activeSection, setActiveSection, isAuthenticated }: Hea
                   <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
                     <Icon name="Shield" className="h-5 w-5 text-primary-foreground" />
                   </div>
-                  <span className="font-heading text-lg font-bold">DivisionAuto</span>
+                  <span className="font-heading text-lg font-bold">Smartline</span>
                 </SheetTitle>
               </SheetHeader>
               
