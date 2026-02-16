@@ -30,6 +30,7 @@ def handler(event: dict, context) -> dict:
     try:
         body = event.get('body', '{}')
         update = json.loads(body)
+        print(f"Update: {json.dumps(update, ensure_ascii=False)[:500]}")
 
         message = update.get('message', {})
         callback_query = update.get('callback_query', {})
@@ -150,7 +151,9 @@ def ask_phone(chat_id: int, user_id: int, first_name: str):
 def process_shared_contact(chat_id: int, user_id: int, contact: dict, first_name: str):
     '''Обработка контакта, отправленного через кнопку'''
     phone = contact.get('phone_number', '')
+    print(f"Contact phone raw: '{phone}'")
     normalized = normalize_phone(phone)
+    print(f"Contact phone normalized: '{normalized}' (len={len(normalized)})")
 
     if len(normalized) != 11:
         send_message(chat_id, "❌ Не удалось определить номер. Попробуйте ввести вручную.")
@@ -231,7 +234,7 @@ def get_registered_menu():
         'inline_keyboard': [
             [{'text': '🆕 Создать заявку', 'callback_data': 'new_request'}],
             [{'text': '📋 Мои заявки', 'callback_data': 'my_requests'}],
-            [{'text': '🌐 Перейти на сайт', 'web_app': {'url': site_url}}]
+            [{'text': '🌐 Открыть сайт', 'url': site_url}]
         ]
     }
 
@@ -368,7 +371,7 @@ def process_message_text(chat_id: int, user_id: int, message_text: str):
             'inline_keyboard': [
                 [{'text': '🆕 Создать ещё заявку', 'callback_data': 'new_request'}],
                 [{'text': '📋 Мои заявки', 'callback_data': 'my_requests'}],
-                [{'text': '🌐 Перейти на сайт', 'web_app': {'url': site_url}}]
+                [{'text': '🌐 Открыть сайт', 'url': site_url}]
             ]
         }
 
@@ -477,7 +480,10 @@ def get_cancel_button():
 
 def normalize_phone(phone: str) -> str:
     '''Нормализация телефона — только цифры, формат 7XXXXXXXXXX'''
+    phone = str(phone).strip()
     digits = ''.join(c for c in phone if c.isdigit())
+    if len(digits) == 12 and digits.startswith('87'):
+        digits = '7' + digits[2:]
     if len(digits) == 10:
         digits = '7' + digits
     if len(digits) == 11 and digits[0] == '8':
@@ -666,6 +672,9 @@ def send_message(chat_id: int, text: str, keyboard=None, parse_mode=None):
             headers={'Content-Type': 'application/json'}
         )
         urllib.request.urlopen(req)
+    except urllib.error.HTTPError as e:
+        error_body = e.read().decode('utf-8', errors='replace')
+        print(f"Send message error: {e} | Response: {error_body}")
     except Exception as e:
         print(f"Send message error: {e}")
 
