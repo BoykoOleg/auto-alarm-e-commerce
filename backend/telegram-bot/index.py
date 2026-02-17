@@ -27,6 +27,10 @@ def handler(event: dict, context) -> dict:
             'isBase64Encoded': False
         }
 
+    if method == 'GET':
+        set_bot_commands()
+        return ok_response({'status': 'commands set'})
+
     try:
         body = event.get('body', '{}')
         update = json.loads(body)
@@ -765,14 +769,31 @@ def answer_callback(callback_id: str):
         pass
 
 
-def ok_response():
-    '''Стандартный ответ'''
+def api_call(method: str, data: dict):
+    url = f'https://api.telegram.org/bot{bot_token}/{method}'
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(data).encode('utf-8'),
+        headers={'Content-Type': 'application/json'}
+    )
+    resp = urllib.request.urlopen(req)
+    return json.loads(resp.read().decode('utf-8'))
+
+
+def set_bot_commands():
+    commands = [
+        {'command': 'start', 'description': 'Запустить бота / Главное меню'}
+    ]
+    api_call('setMyCommands', {'commands': commands})
+
+
+def ok_response(body=None):
     return {
         'statusCode': 200,
         'headers': {
             'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': '*'
         },
-        'body': json.dumps({'ok': True}),
+        'body': json.dumps(body or {'ok': True}),
         'isBase64Encoded': False
     }
