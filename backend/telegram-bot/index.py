@@ -65,8 +65,12 @@ def handle_message(message: dict):
         process_shared_contact(chat_id, user_id, contact, first_name)
         return
 
-    if text == '/start' or text == '🚀 Начать':
+    if text == '/start':
         handle_start(chat_id, user_id, first_name)
+        return
+
+    if text == '🚀 Начать':
+        ask_phone(chat_id, user_id, first_name)
         return
 
     if text.startswith('/'):
@@ -124,7 +128,27 @@ def handle_start(chat_id: int, user_id: int, first_name: str):
     if user_data:
         show_authorized_menu(chat_id, user_data)
     else:
-        ask_phone(chat_id, user_id, first_name)
+        show_welcome_screen(chat_id, first_name)
+
+
+def show_welcome_screen(chat_id: int, first_name: str):
+    '''Приветственный экран с большой кнопкой СТАРТ для новых пользователей'''
+    text = (
+        f"👋 Привет, {first_name}!\n\n"
+        f"🚗 Добро пожаловать в бот установочного центра \"SmartLine\"!\n\n"
+        f"Мы занимаемся русификацией магнитол, навигации и бортовых систем автомобилей.\n\n"
+        f"Нажмите кнопку ниже, чтобы начать 👇"
+    )
+
+    keyboard = {
+        'keyboard': [
+            [{'text': '🚀 Начать'}]
+        ],
+        'resize_keyboard': False,
+        'one_time_keyboard': True
+    }
+
+    send_message(chat_id, text, keyboard)
 
 
 def ask_phone(chat_id: int, user_id: int, first_name: str):
