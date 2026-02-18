@@ -106,6 +106,8 @@ def handle_callback(callback: dict):
     if data == 'main_menu':
         back_to_menu(chat_id, message_id, user_id)
     elif data == 'recover_password':
+        ask_password_confirmation(chat_id, message_id, user_id)
+    elif data == 'confirm_password_reset':
         handle_password_recovery_inline(chat_id, message_id, user_id)
     elif data == 'register':
         start_registration(chat_id, message_id, user_id)
@@ -537,21 +539,50 @@ def handle_password_recovery(chat_id: int, user_id: int):
         send_message(chat_id, "❌ Вы не привязаны к системе.\n\nНажмите /start чтобы пройти идентификацию.")
         return
 
-    new_password = reset_user_password(user_data['id'])
+    formatted_phone = format_phone(user_data['phone'])
+    text = (
+        f"🔑 Восстановление пароля\n\n"
+        f"Будет сгенерирован новый пароль для аккаунта:\n"
+        f"📱 {formatted_phone}\n\n"
+        f"⚠️ Старый пароль перестанет работать.\n\n"
+        f"Продолжить?"
+    )
 
-    if new_password:
-        formatted_phone = format_phone(user_data['phone'])
-        text = (
-            f"🔑 <b>Данные для входа в личный кабинет</b>\n\n"
-            f"📱 Телефон: <code>{formatted_phone}</code>\n"
-            f"🔐 Новый пароль: <code>{new_password}</code>\n\n"
-            f"🌐 Сайт: {site_url}\n\n"
-            f"⚠️ Сохраните пароль! Он был обновлён."
-        )
-        keyboard = get_registered_menu()
-        send_message(chat_id, text, keyboard, parse_mode='HTML')
-    else:
-        send_message(chat_id, "❌ Ошибка сброса пароля. Попробуйте позже.\n\n/start - Вернуться в меню")
+    keyboard = {
+        'inline_keyboard': [
+            [{'text': '✅ Да, сбросить пароль', 'callback_data': 'confirm_password_reset'}],
+            [{'text': '◀️ Отмена', 'callback_data': 'main_menu'}]
+        ]
+    }
+
+    send_message(chat_id, text, keyboard)
+
+
+def ask_password_confirmation(chat_id: int, message_id: int, user_id: int):
+    '''Экран подтверждения сброса пароля'''
+    user_data = get_user_by_telegram(user_id)
+
+    if not user_data:
+        edit_message(chat_id, message_id, "❌ Вы не привязаны к системе.\n\nНажмите /start чтобы пройти идентификацию.")
+        return
+
+    formatted_phone = format_phone(user_data['phone'])
+    text = (
+        f"🔑 Восстановление пароля\n\n"
+        f"Будет сгенерирован новый пароль для аккаунта:\n"
+        f"📱 {formatted_phone}\n\n"
+        f"⚠️ Старый пароль перестанет работать.\n\n"
+        f"Продолжить?"
+    )
+
+    keyboard = {
+        'inline_keyboard': [
+            [{'text': '✅ Да, сбросить пароль', 'callback_data': 'confirm_password_reset'}],
+            [{'text': '◀️ Отмена', 'callback_data': 'main_menu'}]
+        ]
+    }
+
+    edit_message(chat_id, message_id, text, keyboard)
 
 
 def handle_password_recovery_inline(chat_id: int, message_id: int, user_id: int):
