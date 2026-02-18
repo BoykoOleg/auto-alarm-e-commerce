@@ -73,6 +73,10 @@ def handle_message(message: dict):
         ask_phone(chat_id, user_id, first_name)
         return
 
+    if text == '/password':
+        handle_password_recovery(chat_id, user_id)
+        return
+
     if text.startswith('/'):
         return
 
@@ -101,6 +105,8 @@ def handle_callback(callback: dict):
 
     if data == 'main_menu':
         back_to_menu(chat_id, message_id, user_id)
+    elif data == 'recover_password':
+        handle_password_recovery_inline(chat_id, message_id, user_id)
     elif data == 'register':
         start_registration(chat_id, message_id, user_id)
     elif data == 'new_request':
@@ -264,6 +270,7 @@ def get_registered_menu():
         'inline_keyboard': [
             [{'text': '🆕 Создать заявку', 'callback_data': 'new_request'}],
             [{'text': '📋 Мои заявки', 'callback_data': 'my_requests'}],
+            [{'text': '🔑 Восстановление пароля', 'callback_data': 'recover_password'}],
             [{'text': '🌐 Открыть сайт', 'web_app': {'url': site_url}}]
         ]
     }
@@ -522,6 +529,61 @@ def cancel_operation(chat_id: int, message_id: int, user_id: int):
     edit_message(chat_id, message_id, text, keyboard)
 
 
+def handle_password_recovery(chat_id: int, user_id: int):
+    '''Восстановление пароля через команду /password'''
+    user_data = get_user_by_telegram(user_id)
+
+    if not user_data:
+        send_message(chat_id, "❌ Вы не привязаны к системе.\n\nНажмите /start чтобы пройти идентификацию.")
+        return
+
+    new_password = reset_user_password(user_data['id'])
+
+    if new_password:
+        formatted_phone = format_phone(user_data['phone'])
+        text = (
+            f"🔑 <b>Данные для входа в личный кабинет</b>\n\n"
+            f"📱 Телефон: <code>{formatted_phone}</code>\n"
+            f"🔐 Новый пароль: <code>{new_password}</code>\n\n"
+            f"🌐 Сайт: {site_url}\n\n"
+            f"⚠️ Сохраните пароль! Он был обновлён."
+        )
+        keyboard = get_registered_menu()
+        send_message(chat_id, text, keyboard, parse_mode='HTML')
+    else:
+        send_message(chat_id, "❌ Ошибка сброса пароля. Попробуйте позже.\n\n/start - Вернуться в меню")
+
+
+def handle_password_recovery_inline(chat_id: int, message_id: int, user_id: int):
+    '''Восстановление пароля через inline-кнопку'''
+    user_data = get_user_by_telegram(user_id)
+
+    if not user_data:
+        edit_message(chat_id, message_id, "❌ Вы не привязаны к системе.\n\nНажмите /start чтобы пройти идентификацию.")
+        return
+
+    new_password = reset_user_password(user_data['id'])
+
+    if new_password:
+        formatted_phone = format_phone(user_data['phone'])
+        text = (
+            f"🔑 <b>Данные для входа в личный кабинет</b>\n\n"
+            f"📱 Телефон: <code>{formatted_phone}</code>\n"
+            f"🔐 Новый пароль: <code>{new_password}</code>\n\n"
+            f"🌐 Сайт: {site_url}\n\n"
+            f"⚠️ Сохраните пароль! Он был обновлён."
+        )
+        keyboard = get_registered_menu()
+        edit_message(chat_id, message_id, text, keyboard, parse_mode='HTML')
+    else:
+        buttons = {
+            'inline_keyboard': [
+                [{'text': '◀️ Главное меню', 'callback_data': 'main_menu'}]
+            ]
+        }
+        edit_message(chat_id, message_id, "❌ Ошибка сброса пароля. Попробуйте позже.", buttons)
+
+
 def get_cancel_button():
     '''Кнопка отмены'''
     return {
@@ -601,6 +663,26 @@ def link_telegram(user_db_id: int, telegram_id: int):
     except Exception as e:
         print(f"Link telegram error: {e}")
         return False
+
+
+def reset_user_password(user_db_id: int):
+    '''Сброс пароля пользователя — генерация нового и обновление в БД'''
+    try:
+        import secrets as sec
+        import hashlib
+        new_password = sec.token_urlsafe(8)
+        password_hash = hashlib.sha256(new_password.encode()).hexdigest()
+
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("UPDATE users SET password_hash = %s WHERE id = %s", (password_hash, user_db_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+        return new_password
+    except Exception as e:
+        print(f"Reset password error: {e}")
+        return None
 
 
 def register_user(telegram_id: int, name: str, phone: str, password: str):
@@ -734,7 +816,7 @@ def send_message(chat_id: int, text: str, keyboard=None, parse_mode=None):
         print(f"Send message error: {e}")
 
 
-def edit_message(chat_id: int, message_id: int, text: str, keyboard=None):
+def edit_message(chat_id: int, message_id: int, text: str, keyboard=None, parse_mode=None):
     '''Редактирование сообщения'''
     try:
         url = f'https://api.telegram.org/bot{bot_token}/editMessageText'
@@ -743,6 +825,9 @@ def edit_message(chat_id: int, message_id: int, text: str, keyboard=None):
             'message_id': message_id,
             'text': text
         }
+
+        if parse_mode:
+            data['parse_mode'] = parse_mode
 
         if keyboard:
             data['reply_markup'] = keyboard
@@ -806,7 +891,8 @@ def api_call(method: str, data: dict):
 
 def set_bot_commands():
     commands = [
-        {'command': 'start', 'description': 'Запустить бота / Главное меню'}
+        {'command': 'start', 'description': 'Запустить бота / Главное меню'},
+        {'command': 'password', 'description': 'Восстановление пароля'}
     ]
     api_call('setMyCommands', {'commands': commands})
 
