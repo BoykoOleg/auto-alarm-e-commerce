@@ -368,17 +368,16 @@ def handle_delete_request(cur, conn, body: dict) -> dict:
             'isBase64Encoded': False
         }
     
-    cur.execute("""
-        UPDATE russification_requests
-        SET status = 'to_delete', updated_at = NOW()
-        WHERE id = %s
-    """, (request_id,))
+    cur.execute("DELETE FROM bonus_transactions WHERE work_id IN (SELECT id FROM completed_works WHERE request_id = %s)", (request_id,))
+    cur.execute("DELETE FROM completed_works WHERE request_id = %s", (request_id,))
+    cur.execute("DELETE FROM request_messages WHERE request_id = %s", (request_id,))
+    cur.execute("DELETE FROM russification_requests WHERE id = %s", (request_id,))
     
     conn.commit()
     
     return {
         'statusCode': 200,
         'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
-        'body': json.dumps({'success': True, 'message': 'Request marked for deletion'}),
+        'body': json.dumps({'success': True, 'message': 'Request deleted'}),
         'isBase64Encoded': False
     }

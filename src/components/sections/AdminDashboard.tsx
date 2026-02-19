@@ -150,15 +150,6 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
   }
 
   const handleDeleteRequest = async (requestId: number) => {
-    const request = requests.find(r => r.id === requestId)
-    
-    if (!request) return
-    
-    if (request.status !== 'cancelled') {
-      alert('Удаление возможно только из статуса "Отменено". Пожалуйста, сначала переведите заявку в статус "Отменено".')
-      return
-    }
-    
     if (!confirm('Удалить заявку? Это действие нельзя отменить.')) return
     
     const token = localStorage.getItem('authToken')
