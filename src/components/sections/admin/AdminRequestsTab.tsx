@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -18,16 +18,42 @@ interface AdminRequestsTabProps {
   onDeleteRequest: (requestId: number) => void
 }
 
-export const AdminRequestsTab = ({ 
-  requests, 
-  users, 
-  isLoading, 
-  onUpdateStatus, 
+export const AdminRequestsTab = ({
+  requests,
+  users,
+  isLoading,
+  onUpdateStatus,
   onCompleteWork,
   onDeleteRequest
 }: AdminRequestsTabProps) => {
   const [selectedRequest, setSelectedRequest] = useState<any>(null)
   const [chatRequestId, setChatRequestId] = useState<number | null>(null)
+  const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [clientSearch, setClientSearch] = useState('')
+
+  const filteredRequests = useMemo(() => {
+    return requests.filter((r) => {
+      if (statusFilter !== 'all' && r.status !== statusFilter) return false
+      if (clientSearch.trim()) {
+        const q = clientSearch.trim().toLowerCase()
+        const partner = users.find((u: any) => u.id === r.user_id)
+        const searchable = [
+          r.client_name,
+          r.client_phone,
+          r.client_email,
+          r.car_brand,
+          r.car_model,
+          partner?.name,
+          partner?.company_name
+        ]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase()
+        if (!searchable.includes(q)) return false
+      }
+      return true
+    })
+  }, [requests, statusFilter, clientSearch, users])
 
   const getStatusBadge = (status: string) => {
     const statusMap: Record<string, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
@@ -44,10 +70,10 @@ export const AdminRequestsTab = ({
   const getServiceTypeName = (type: string) => {
     const types: Record<string, string> = {
       multimedia: 'Мультимедиа',
-      dashboard: 'Бортовой компьютер',
+      dashboard: 'Борт. компьютер',
       navigation: 'Навигация',
-      climate: 'Климат-контроль',
-      full: 'Полная русификация',
+      climate: 'Климат',
+      full: 'Полная',
     }
     return types[type] || type
   }
@@ -64,124 +90,136 @@ export const AdminRequestsTab = ({
   return (
     <>
       <Card>
-        <CardHeader>
+        <CardHeader className="pb-3">
           <CardTitle>Управление заявками</CardTitle>
           <CardDescription>
             Все заявки от партнёров на русификацию автомобилей
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
+            <div className="flex-1">
+              <Input
+                placeholder="Поиск по клиенту, партнёру, авто..."
+                value={clientSearch}
+                onChange={(e) => setClientSearch(e.target.value)}
+                className="h-9"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full sm:w-[160px] h-9">
+                <SelectValue placeholder="Все статусы" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Все статусы</SelectItem>
+                <SelectItem value="pending">Новые</SelectItem>
+                <SelectItem value="in_progress">В работе</SelectItem>
+                <SelectItem value="completed">Завершено</SelectItem>
+                <SelectItem value="cancelled">Отменено</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {isLoading ? (
             <div className="text-center py-8">
               <Icon name="Loader" className="h-8 w-8 animate-spin mx-auto mb-2" />
               <p className="text-muted-foreground">Загрузка...</p>
             </div>
-          ) : requests.length === 0 ? (
+          ) : filteredRequests.length === 0 ? (
             <div className="text-center py-8">
               <Icon name="FileText" className="h-12 w-12 mx-auto mb-3 text-muted-foreground" />
-              <p className="text-muted-foreground">Нет заявок</p>
+              <p className="text-muted-foreground">
+                {requests.length === 0 ? 'Нет заявок' : 'Ничего не найдено'}
+              </p>
+              {requests.length > 0 && (
+                <Button variant="ghost" size="sm" className="mt-2" onClick={() => { setStatusFilter('all'); setClientSearch('') }}>
+                  Сбросить фильтры
+                </Button>
+              )}
             </div>
           ) : (
-            <div className="space-y-4">
-              {requests.map((request) => {
-                const partner = users.find(u => u.id === request.user_id)
-                
+            <div className="space-y-2">
+              {filteredRequests.map((request) => {
+                const partner = users.find((u: any) => u.id === request.user_id)
+
                 return (
-                  <Card key={request.id} className="border-2">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
-                            <CardTitle className="text-lg">
-                              {request.car_brand} {request.car_model} ({request.car_year})
-                            </CardTitle>
-                            {getStatusBadge(request.status)}
-                          </div>
-                          <CardDescription>
-                            Клиент: {request.client_name} • {request.client_phone}
-                            {request.client_email && ` • ${request.client_email}`}
-                          </CardDescription>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Партнёр: {partner?.name || 'Неизвестно'}
-                            {partner?.company_name && ` (${partner.company_name})`}
-                          </p>
+                  <div
+                    key={request.id}
+                    className="border rounded-lg p-3 hover:bg-muted/30 transition-colors"
+                  >
+                    <div className="flex flex-col lg:flex-row lg:items-center gap-2">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-medium text-sm">
+                            {request.car_brand} {request.car_model}
+                            {request.car_year ? ` (${request.car_year})` : ''}
+                          </span>
+                          {getStatusBadge(request.status)}
+                          {request.unread_count > 0 && (
+                            <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
+                              {request.unread_count}
+                            </Badge>
+                          )}
                         </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Icon name="Wrench" className="h-4 w-4 text-muted-foreground" />
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1 flex-wrap">
+                          <span>{request.client_name}</span>
+                          <span>·</span>
+                          <span>{request.client_phone}</span>
+                          <span>·</span>
                           <span>{getServiceTypeName(request.service_type)}</span>
-                        </div>
-                        {request.description && (
-                          <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                            <Icon name="MessageSquare" className="h-4 w-4 mt-0.5" />
-                            <span>{request.description}</span>
-                          </div>
-                        )}
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <Icon name="Calendar" className="h-4 w-4" />
-                          <span>{new Date(request.created_at).toLocaleString('ru-RU')}</span>
-                        </div>
-
-                        <div className="pt-3 border-t space-y-2">
-                          <div className="flex flex-col sm:flex-row gap-2">
-                            <Select
-                              value={request.status}
-                              onValueChange={(value) => onUpdateStatus(request.id, value)}
-                              disabled={request.status === 'to_delete'}
-                            >
-                              <SelectTrigger className="w-full sm:w-[180px]">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="pending">Новая</SelectItem>
-                                <SelectItem value="in_progress">В работе</SelectItem>
-                                <SelectItem value="completed">Завершено</SelectItem>
-                                <SelectItem value="cancelled">Отменено</SelectItem>
-                              </SelectContent>
-                            </Select>
-
-                            {request.status === 'in_progress' && (
-                              <Button
-                                size="sm"
-                                className="w-full sm:w-auto"
-                                onClick={() => setSelectedRequest(request)}
-                              >
-                                <Icon name="CheckCircle" className="mr-2 h-4 w-4" />
-                                <span className="hidden sm:inline">Завершить работу</span>
-                                <span className="sm:hidden">Завершить</span>
-                              </Button>
-                            )}
-                          </div>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="flex-1 relative"
-                              onClick={() => setChatRequestId(request.id)}
-                            >
-                              <Icon name="MessageCircle" className="mr-2 h-4 w-4" />
-                              Открыть переписку
-                              {request.unread_count > 0 && (
-                                <span className="ml-2 bg-destructive text-destructive-foreground rounded-full px-2 py-0.5 text-xs font-medium">
-                                  {request.unread_count}
-                                </span>
-                              )}
-                            </Button>
-                            <Button
-                              variant="destructive"
-                              size="sm"
-                              onClick={() => onDeleteRequest(request.id)}
-                            >
-                              <Icon name="Trash2" className="h-4 w-4" />
-                            </Button>
-                          </div>
+                          <span>·</span>
+                          <span>{partner?.name || '—'}</span>
+                          <span>·</span>
+                          <span>{new Date(request.created_at).toLocaleDateString('ru-RU')}</span>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+
+                      <div className="flex items-center gap-1.5 flex-shrink-0">
+                        <Select
+                          value={request.status}
+                          onValueChange={(value) => onUpdateStatus(request.id, value)}
+                          disabled={request.status === 'to_delete'}
+                        >
+                          <SelectTrigger className="h-7 text-xs w-[120px]">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="pending">Новая</SelectItem>
+                            <SelectItem value="in_progress">В работе</SelectItem>
+                            <SelectItem value="completed">Завершено</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        {request.status === 'in_progress' && (
+                          <Button
+                            size="sm"
+                            className="h-7 text-xs px-2"
+                            onClick={() => setSelectedRequest(request)}
+                          >
+                            <Icon name="CheckCircle" className="h-3 w-3" />
+                          </Button>
+                        )}
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs px-2 relative"
+                          onClick={() => setChatRequestId(request.id)}
+                        >
+                          <Icon name="MessageCircle" className="h-3 w-3" />
+                        </Button>
+
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="h-7 px-2"
+                          onClick={() => onDeleteRequest(request.id)}
+                        >
+                          <Icon name="Trash2" className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 )
               })}
             </div>
@@ -254,3 +292,5 @@ export const AdminRequestsTab = ({
     </>
   )
 }
+
+export default AdminRequestsTab
