@@ -186,7 +186,7 @@ export const AdminRequestsTab = ({
                           <SelectContent>
                             <SelectItem value="pending">Новая</SelectItem>
                             <SelectItem value="in_progress">В работе</SelectItem>
-                            <SelectItem value="completed">Завершено</SelectItem>
+                            <SelectItem value="cancelled">Отменено</SelectItem>
                           </SelectContent>
                         </Select>
 
