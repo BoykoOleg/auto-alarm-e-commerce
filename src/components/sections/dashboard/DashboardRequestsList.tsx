@@ -56,67 +56,57 @@ export const DashboardRequestsList = ({ requests, isLoading }: DashboardRequests
               <p className="text-muted-foreground">У вас пока нет заявок</p>
             </div>
           ) : (
-            <div className="space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {requests.map((request) => (
-                <Card key={request.id} className="border">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <CardTitle className="text-lg">
-                            {request.car_brand} {request.car_model} {request.car_year}
-                          </CardTitle>
-                          {getStatusBadge(request.status)}
-                          {request.unread_count > 0 && (
-                            <Badge variant="destructive" className="ml-auto">
-                              {request.unread_count} новых
-                            </Badge>
-                          )}
-                        </div>
-                        <CardDescription className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <Icon name="User" className="h-3 w-3" />
-                            <span>{request.client_name}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Icon name="Phone" className="h-3 w-3" />
-                            <span>{request.client_phone}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Icon name="Wrench" className="h-3 w-3" />
-                            <span>{getServiceTypeName(request.service_type)}</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Icon name="Calendar" className="h-3 w-3" />
-                            <span>
-                              {new Date(request.created_at).toLocaleDateString('ru-RU', {
-                                day: 'numeric',
-                                month: 'long',
-                                year: 'numeric',
-                              })}
-                            </span>
-                          </div>
-                        </CardDescription>
-                      </div>
+                <div key={request.id} className="flex flex-col p-3 border rounded-lg">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <span className="font-medium">
+                      {request.car_brand} {request.car_model} {request.car_year}
+                    </span>
+                    {getStatusBadge(request.status)}
+                    {request.unread_count > 0 && (
+                      <Badge variant="destructive" className="ml-auto">
+                        {request.unread_count} новых
+                      </Badge>
+                    )}
+                  </div>
+                  <div className="text-sm text-muted-foreground space-y-1 flex-1">
+                    <div className="flex items-center gap-2">
+                      <Icon name="User" className="h-3 w-3" />
+                      <span>{request.client_name}</span>
                     </div>
-                  </CardHeader>
-                  {request.description && (
-                    <CardContent className="pt-0">
-                      <p className="text-sm text-muted-foreground">{request.description}</p>
-                    </CardContent>
-                  )}
-                  <CardContent className="pt-0">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="w-full"
-                      onClick={() => setSelectedRequestId(request.id)}
-                    >
-                      <Icon name="MessageCircle" className="mr-2 h-4 w-4" />
-                      {request.unread_count > 0 ? 'Посмотреть новые сообщения' : 'Открыть чат'}
-                    </Button>
-                  </CardContent>
-                </Card>
+                    <div className="flex items-center gap-2">
+                      <Icon name="Phone" className="h-3 w-3" />
+                      <span>{request.client_phone}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Icon name="Wrench" className="h-3 w-3" />
+                      <span>{getServiceTypeName(request.service_type)}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Icon name="Calendar" className="h-3 w-3" />
+                      <span>
+                        {new Date(request.created_at).toLocaleDateString('ru-RU', {
+                          day: 'numeric',
+                          month: 'long',
+                          year: 'numeric',
+                        })}
+                      </span>
+                    </div>
+                    {request.description && (
+                      <p className="text-xs text-muted-foreground pt-1">{request.description}</p>
+                    )}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="w-full mt-3"
+                    onClick={() => setSelectedRequestId(request.id)}
+                  >
+                    <Icon name="MessageCircle" className="mr-2 h-4 w-4" />
+                    {request.unread_count > 0 ? 'Новые сообщения' : 'Открыть чат'}
+                  </Button>
+                </div>
               ))}
             </div>
           )}
