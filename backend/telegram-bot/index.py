@@ -574,7 +574,7 @@ def process_message_text(chat_id: int, user_id: int, message_text: str):
             ]
         }
 
-        text = f"✅ Заявка #{request_id} создана!\n\n📞 Мы свяжемся с вами в ближайшее время."
+        text = f"✅ Заявка #{str(request_id).zfill(3)} создана!\n\n📞 Мы свяжемся с вами в ближайшее время."
         send_message(chat_id, text, buttons)
     else:
         send_message(chat_id, "❌ Ошибка создания заявки. Попробуйте позже.\n\n/start - Вернуться в меню")
@@ -613,7 +613,7 @@ def show_my_requests(chat_id: int, message_id: int, user_id: int):
             'cancelled': 'Отменена'
         }.get(req['status'], req['status'])
 
-        text += f"{status_emoji} Заявка #{req['id']}\n"
+        text += f"{status_emoji} Заявка #{str(req['id']).zfill(3)}\n"
         text += f"Статус: {status_text}\n"
         text += f"Автомобиль: {req['car']}\n"
         text += f"Дата: {str(req['created_at'])[:16]}\n\n"
@@ -669,14 +669,14 @@ def cancel_operation(chat_id: int, message_id: int, user_id: int):
 def start_reply(chat_id: int, message_id: int, user_id: int, request_id: int):
     '''Клиент начинает отвечать на сообщение по заявке'''
     user_states[user_id] = {'step': 'waiting_reply', 'request_id': request_id}
-    text = f"💬 Ответ на заявку #{request_id}\n\nНапишите сообщение:"
+    text = f"💬 Ответ на заявку #{str(request_id).zfill(3)}\n\nНапишите сообщение:"
     edit_message(chat_id, message_id, text, get_cancel_button())
 
 
 def start_admin_reply(chat_id: int, message_id: int, user_id: int, request_id: int):
     '''Админ начинает отвечать на сообщение клиента'''
     user_states[user_id] = {'step': 'waiting_admin_reply', 'request_id': request_id}
-    text = f"💬 Ответ от компании на заявку #{request_id}\n\nНапишите сообщение:"
+    text = f"💬 Ответ от компании на заявку #{str(request_id).zfill(3)}\n\nНапишите сообщение:"
     edit_message(chat_id, message_id, text, get_cancel_button())
 
 
@@ -705,7 +705,7 @@ def process_reply_text(chat_id: int, user_id: int, text: str):
                 [{'text': '◀️ Главное меню', 'callback_data': 'main_menu'}]
             ]
         }
-        send_message(chat_id, f"✅ Сообщение отправлено по заявке #{request_id}", buttons)
+        send_message(chat_id, f"✅ Сообщение отправлено по заявке #{str(request_id).zfill(3)}", buttons)
     else:
         send_message(chat_id, "❌ Не удалось отправить сообщение. Возможно, заявка не найдена.\n\n/start - Меню")
 
@@ -734,7 +734,7 @@ def process_admin_reply_text(chat_id: int, user_id: int, text: str):
                 [{'text': '💬 Написать ещё', 'callback_data': f'admin_reply_{request_id}'}]
             ]
         }
-        send_message(chat_id, f"✅ Ответ отправлен клиенту по заявке #{request_id}", buttons)
+        send_message(chat_id, f"✅ Ответ отправлен клиенту по заявке #{str(request_id).zfill(3)}", buttons)
     else:
         send_message(chat_id, "❌ Не удалось отправить сообщение.")
 
@@ -1140,7 +1140,7 @@ def notify_admin_new_request(request_id, name, phone, car, message):
             return
 
         text = f"🔔 <b>Новая заявка из Telegram</b>\n\n"
-        text += f"📝 Заявка #{request_id}\n"
+        text += f"📝 Заявка #{str(request_id).zfill(3)}\n"
         text += f"👤 Имя: {name}\n"
         text += f"📱 Телефон: {phone}\n"
         text += f"🚗 Автомобиль: {car}\n"
