@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
 import Icon from '@/components/ui/icon'
@@ -26,6 +25,8 @@ export const AdminRequestChat = ({ requestId }: AdminRequestChatProps) => {
   const [isLoading, setIsLoading] = useState(true)
   const [isSending, setIsSending] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -33,12 +34,15 @@ export const AdminRequestChat = ({ requestId }: AdminRequestChatProps) => {
   }, [requestId])
 
   useEffect(() => {
-    scrollToBottom()
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px'
+    }
+  }, [newMessage])
 
   const loadMessages = async () => {
     setIsLoading(true)
@@ -91,15 +95,13 @@ export const AdminRequestChat = ({ requestId }: AdminRequestChatProps) => {
   }
 
   const handleSendMessage = async () => {
-    if (!newMessage.trim() && !selectedFile) {
-      return
-    }
+    if (!newMessage.trim() && !selectedFile) return
 
     setIsSending(true)
     const token = localStorage.getItem('authToken')
 
     try {
-      const messageData: any = {
+      const messageData: Record<string, unknown> = {
         message_text: newMessage.trim() || null,
       }
 
@@ -135,11 +137,9 @@ export const AdminRequestChat = ({ requestId }: AdminRequestChatProps) => {
       if (response.ok) {
         setNewMessage('')
         setSelectedFile(null)
+        if (fileInputRef.current) fileInputRef.current.value = ''
+        if (textareaRef.current) textareaRef.current.style.height = 'auto'
         loadMessages()
-        toast({
-          title: 'Успешно',
-          description: 'Сообщение отправлено',
-        })
       } else {
         const error = await response.json()
         toast({
@@ -159,25 +159,21 @@ export const AdminRequestChat = ({ requestId }: AdminRequestChatProps) => {
     }
   }
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSendMessage()
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-[500px]">
-        <Icon name="Loader" className="h-8 w-8 animate-spin" />
-      </div>
-    )
-  }
-
   return (
-    <div className="flex flex-col h-[500px]">
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
-        {messages.length === 0 ? (
+    <div className="flex flex-col flex-1 min-h-0">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 overscroll-contain">
+        {isLoading ? (
+          <div className="flex items-center justify-center min-h-[200px]">
+            <Icon name="Loader" className="h-8 w-8 animate-spin" />
+          </div>
+        ) : messages.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <Icon name="MessageCircle" className="h-12 w-12 mx-auto mb-2 opacity-50" />
             <p>Нет сообщений</p>
@@ -189,13 +185,13 @@ export const AdminRequestChat = ({ requestId }: AdminRequestChatProps) => {
               className={`flex ${msg.sender_type === 'company' ? 'justify-end' : 'justify-start'}`}
             >
               <Card
-                className={`max-w-[80%] ${
+                className={`max-w-[85%] sm:max-w-[75%] ${
                   msg.sender_type === 'company'
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted'
                 }`}
               >
-                <CardContent className="p-3">
+                <CardContent className="p-2.5 sm:p-3">
                   <div className="flex items-start gap-2">
                     <Icon
                       name={msg.sender_type === 'company' ? 'Building2' : 'User'}
@@ -210,11 +206,13 @@ export const AdminRequestChat = ({ requestId }: AdminRequestChatProps) => {
                       {msg.file_url && (
                         <div className="mt-2">
                           {msg.file_type?.startsWith('image/') ? (
-                            <img
-                              src={msg.file_url}
-                              alt={msg.file_name || 'Изображение'}
-                              className="max-w-full rounded border"
-                            />
+                            <a href={msg.file_url} target="_blank" rel="noopener noreferrer">
+                              <img
+                                src={msg.file_url}
+                                alt={msg.file_name || 'Изображение'}
+                                className="max-w-full rounded border cursor-pointer hover:opacity-90"
+                              />
+                            </a>
                           ) : (
                             <a
                               href={msg.file_url}
@@ -223,7 +221,7 @@ export const AdminRequestChat = ({ requestId }: AdminRequestChatProps) => {
                               className="flex items-center gap-2 text-sm underline"
                             >
                               <Icon name="Paperclip" className="h-4 w-4" />
-                              {msg.file_name}
+                              <span className="break-all">{msg.file_name}</span>
                             </a>
                           )}
                         </div>
@@ -241,31 +239,28 @@ export const AdminRequestChat = ({ requestId }: AdminRequestChatProps) => {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="border-t p-4">
+      <div className="flex-shrink-0 border-t p-3 sm:p-4 bg-background">
         {selectedFile && (
           <div className="mb-2 flex items-center gap-2 text-sm bg-muted p-2 rounded">
-            <Icon name="Paperclip" className="h-4 w-4" />
+            <Icon name="Paperclip" className="h-4 w-4 flex-shrink-0" />
             <span className="flex-1 truncate">{selectedFile.name}</span>
             <Button
               size="sm"
               variant="ghost"
-              onClick={() => setSelectedFile(null)}
+              className="h-6 w-6 p-0 flex-shrink-0"
+              onClick={() => {
+                setSelectedFile(null)
+                if (fileInputRef.current) fileInputRef.current.value = ''
+              }}
             >
-              <Icon name="X" className="h-4 w-4" />
+              <Icon name="X" className="h-3.5 w-3.5" />
             </Button>
           </div>
         )}
-        <div className="flex gap-2">
-          <Input
-            value={newMessage}
-            onChange={(e) => setNewMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            placeholder="Введите сообщение..."
-            disabled={isSending}
-          />
+        <div className="flex items-end gap-2">
           <input
+            ref={fileInputRef}
             type="file"
-            id={`file-upload-admin-${requestId}`}
             className="hidden"
             onChange={handleFileSelect}
             disabled={isSending}
@@ -273,12 +268,28 @@ export const AdminRequestChat = ({ requestId }: AdminRequestChatProps) => {
           <Button
             variant="outline"
             size="icon"
-            onClick={() => document.getElementById(`file-upload-admin-${requestId}`)?.click()}
+            className="flex-shrink-0 h-10 w-10"
+            onClick={() => fileInputRef.current?.click()}
             disabled={isSending}
           >
             <Icon name="Paperclip" className="h-4 w-4" />
           </Button>
-          <Button onClick={handleSendMessage} disabled={isSending || (!newMessage.trim() && !selectedFile)}>
+          <textarea
+            ref={textareaRef}
+            value={newMessage}
+            onChange={(e) => setNewMessage(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Сообщение..."
+            disabled={isSending}
+            rows={1}
+            className="flex-1 min-h-[40px] max-h-[120px] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          />
+          <Button
+            size="icon"
+            className="flex-shrink-0 h-10 w-10"
+            onClick={handleSendMessage}
+            disabled={isSending || (!newMessage.trim() && !selectedFile)}
+          >
             {isSending ? (
               <Icon name="Loader" className="h-4 w-4 animate-spin" />
             ) : (
@@ -290,3 +301,5 @@ export const AdminRequestChat = ({ requestId }: AdminRequestChatProps) => {
     </div>
   )
 }
+
+export default AdminRequestChat

@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import Icon from '@/components/ui/icon';
 
@@ -16,6 +15,7 @@ interface Message {
 
 interface RequestChatProps {
   requestId: number;
+  onClose?: () => void;
 }
 
 export const RequestChat = ({ requestId }: RequestChatProps) => {
@@ -26,6 +26,7 @@ export const RequestChat = ({ requestId }: RequestChatProps) => {
   const [isSending, setIsSending] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -35,6 +36,13 @@ export const RequestChat = ({ requestId }: RequestChatProps) => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px';
+    }
+  }, [newMessage]);
 
   const loadMessages = async () => {
     setIsLoading(true);
@@ -122,6 +130,7 @@ export const RequestChat = ({ requestId }: RequestChatProps) => {
         setNewMessage('');
         setSelectedFile(null);
         if (fileInputRef.current) fileInputRef.current.value = '';
+        if (textareaRef.current) textareaRef.current.style.height = 'auto';
         await loadMessages();
       } else {
         const data = await response.json();
@@ -152,23 +161,23 @@ export const RequestChat = ({ requestId }: RequestChatProps) => {
     }).format(date);
   };
 
-  return (
-    <div className="flex flex-col h-[500px] border rounded-lg">
-      <div className="p-4 border-b bg-muted/30">
-        <h3 className="font-semibold flex items-center gap-2">
-          <Icon name="MessageSquare" size={20} />
-          Переписка по заявке
-        </h3>
-      </div>
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  };
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+  return (
+    <div className="flex flex-col flex-1 min-h-0">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 space-y-3 overscroll-contain -webkit-overflow-scrolling-touch">
         {isLoading ? (
-          <div className="flex items-center justify-center h-full">
+          <div className="flex items-center justify-center h-full min-h-[200px]">
             <Icon name="Loader2" className="animate-spin" size={32} />
           </div>
         ) : messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-muted-foreground">
-            <p>Сообщений пока нет. Начните переписку!</p>
+          <div className="flex items-center justify-center h-full min-h-[200px] text-muted-foreground">
+            <p className="text-center text-sm">Сообщений пока нет. Начните переписку!</p>
           </div>
         ) : (
           messages.map((msg) => (
@@ -177,13 +186,15 @@ export const RequestChat = ({ requestId }: RequestChatProps) => {
               className={`flex ${msg.sender_type === 'client' ? 'justify-end' : 'justify-start'}`}
             >
               <div
-                className={`max-w-[70%] rounded-lg p-3 ${
+                className={`max-w-[85%] sm:max-w-[70%] rounded-lg p-2.5 sm:p-3 ${
                   msg.sender_type === 'client'
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted'
                 }`}
               >
-                {msg.message_text && <p className="whitespace-pre-wrap">{msg.message_text}</p>}
+                {msg.message_text && (
+                  <p className="whitespace-pre-wrap text-sm sm:text-base break-words">{msg.message_text}</p>
+                )}
                 
                 {msg.file_url && (
                   <div className="mt-2 flex items-center gap-2">
@@ -200,10 +211,10 @@ export const RequestChat = ({ requestId }: RequestChatProps) => {
                         href={msg.file_url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-2 underline hover:opacity-80"
+                        className="flex items-center gap-2 underline hover:opacity-80 text-sm"
                       >
                         <Icon name="Paperclip" size={16} />
-                        {msg.file_name}
+                        <span className="break-all">{msg.file_name}</span>
                       </a>
                     )}
                   </div>
@@ -217,25 +228,26 @@ export const RequestChat = ({ requestId }: RequestChatProps) => {
         <div ref={messagesEndRef} />
       </div>
 
-      <div className="p-4 border-t bg-muted/10">
+      <div className="flex-shrink-0 p-3 sm:p-4 border-t bg-background">
         {selectedFile && (
           <div className="mb-2 flex items-center gap-2 text-sm bg-muted p-2 rounded">
-            <Icon name="Paperclip" size={16} />
+            <Icon name="Paperclip" size={16} className="flex-shrink-0" />
             <span className="flex-1 truncate">{selectedFile.name}</span>
             <Button
               variant="ghost"
               size="sm"
+              className="flex-shrink-0 h-6 w-6 p-0"
               onClick={() => {
                 setSelectedFile(null);
                 if (fileInputRef.current) fileInputRef.current.value = '';
               }}
             >
-              <Icon name="X" size={16} />
+              <Icon name="X" size={14} />
             </Button>
           </div>
         )}
 
-        <div className="flex gap-2">
+        <div className="flex items-end gap-2">
           <input
             ref={fileInputRef}
             type="file"
@@ -247,34 +259,36 @@ export const RequestChat = ({ requestId }: RequestChatProps) => {
           <Button
             variant="outline"
             size="icon"
+            className="flex-shrink-0 h-10 w-10"
             onClick={() => fileInputRef.current?.click()}
             disabled={isSending}
           >
-            <Icon name="Paperclip" size={20} />
+            <Icon name="Paperclip" size={18} />
           </Button>
 
-          <Input
-            placeholder="Введите сообщение..."
+          <textarea
+            ref={textareaRef}
+            placeholder="Сообщение..."
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSendMessage();
-              }
-            }}
+            onKeyDown={handleKeyDown}
             disabled={isSending}
+            rows={1}
+            className="flex-1 min-h-[40px] max-h-[120px] resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           />
 
-          <Button onClick={handleSendMessage} disabled={isSending || (!newMessage.trim() && !selectedFile)}>
-            {isSending ? (
-              <Icon name="Loader2" className="animate-spin" size={20} />
-            ) : (
-              <Icon name="Send" size={20} />
-            )}
+          <Button
+            size="icon"
+            className="flex-shrink-0 h-10 w-10"
+            onClick={handleSendMessage}
+            disabled={isSending || (!newMessage.trim() && !selectedFile)}
+          >
+            <Icon name={isSending ? 'Loader2' : 'Send'} size={18} className={isSending ? 'animate-spin' : ''} />
           </Button>
         </div>
       </div>
     </div>
   );
 };
+
+export default RequestChat;

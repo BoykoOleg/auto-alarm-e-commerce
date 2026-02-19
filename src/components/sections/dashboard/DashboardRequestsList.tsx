@@ -124,9 +124,9 @@ export const DashboardRequestsList = ({ requests, isLoading }: DashboardRequests
       </Card>
 
       <Dialog open={selectedRequestId !== null} onOpenChange={() => setSelectedRequestId(null)}>
-        <DialogContent className="max-w-3xl max-h-[80vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle>Чат по заявке</DialogTitle>
+        <DialogContent className="w-[100vw] h-[100dvh] max-w-[100vw] sm:max-w-3xl sm:w-full sm:h-auto sm:max-h-[80vh] p-0 sm:p-6 rounded-none sm:rounded-lg overflow-hidden flex flex-col gap-0 border-0 sm:border [&>button]:top-3 [&>button]:right-3 [&>button]:z-10">
+          <DialogHeader className="flex-shrink-0 p-3 sm:p-0 sm:pb-2 border-b sm:border-0">
+            <DialogTitle className="text-base sm:text-lg">Чат по заявке</DialogTitle>
           </DialogHeader>
           {selectedRequestId && (
             <RequestChat
