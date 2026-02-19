@@ -117,6 +117,8 @@ def handle_callback(callback: dict):
         handle_password_recovery_inline(chat_id, message_id, user_id)
     elif data == 'register':
         start_registration(chat_id, message_id, user_id)
+    elif data == 'register_with_contact_name':
+        register_with_contact_name(chat_id, message_id, user_id)
     elif data == 'new_request':
         start_new_request(chat_id, message_id, user_id)
     elif data == 'my_requests':
@@ -204,16 +206,18 @@ def ask_phone(chat_id: int, user_id: int, first_name: str):
 def process_shared_contact(chat_id: int, user_id: int, contact: dict, first_name: str):
     '''Обработка контакта, отправленного через кнопку'''
     phone = contact.get('phone_number', '')
-    print(f"Contact phone raw: '{phone}'")
+    contact_name = contact.get('first_name', '')
+    contact_last = contact.get('last_name', '')
+    full_contact_name = f"{contact_name} {contact_last}".strip() if contact_name else first_name
+
     normalized = normalize_phone(phone)
-    print(f"Contact phone normalized: '{normalized}' (len={len(normalized)})")
 
     if len(normalized) != 11:
         send_message(chat_id, "❌ Не удалось определить номер. Попробуйте ввести вручную.")
         user_states[user_id] = {'step': 'waiting_phone_text'}
         return
 
-    check_phone_in_db(chat_id, user_id, normalized, first_name)
+    check_phone_in_db(chat_id, user_id, normalized, first_name, contact_full_name=full_contact_name)
 
 
 def process_phone_input(chat_id: int, user_id: int, phone_text: str, first_name: str):
@@ -227,7 +231,7 @@ def process_phone_input(chat_id: int, user_id: int, phone_text: str, first_name:
     check_phone_in_db(chat_id, user_id, normalized, first_name)
 
 
-def check_phone_in_db(chat_id: int, user_id: int, phone: str, first_name: str):
+def check_phone_in_db(chat_id: int, user_id: int, phone: str, first_name: str, contact_full_name: str = ''):
     '''Ключевая логика: проверяем телефон в базе'''
     if user_id in user_states:
         del user_states[user_id]
@@ -253,20 +257,34 @@ def check_phone_in_db(chat_id: int, user_id: int, phone: str, first_name: str):
         send_message(chat_id, text, keyboard)
     else:
         formatted_phone = format_phone(phone)
-        text = (
-            f"🔍 Номер {formatted_phone} не найден в базе.\n\n"
-            f"Хотите зарегистрироваться? Это займёт пару секунд."
-        )
+        saved_name = contact_full_name or ''
+        user_states[user_id] = {'phone': phone, 'contact_name': saved_name}
 
-        keyboard = {
-            'inline_keyboard': [
-                [{'text': '✅ Зарегистрироваться', 'callback_data': 'register'}],
-                [{'text': '📝 Оставить заявку без регистрации', 'callback_data': 'new_request'}]
-            ]
-        }
-
-        user_states[user_id] = {'phone': phone}
-        send_message(chat_id, text, keyboard)
+        if saved_name:
+            text = (
+                f"🔍 Номер {formatted_phone} не найден в базе.\n\n"
+                f"Хотите зарегистрироваться как <b>{saved_name}</b>?"
+            )
+            keyboard = {
+                'inline_keyboard': [
+                    [{'text': f'✅ Да, я {saved_name}', 'callback_data': 'register_with_contact_name'}],
+                    [{'text': '✏️ Ввести другое имя', 'callback_data': 'register'}],
+                    [{'text': '📝 Оставить заявку без регистрации', 'callback_data': 'new_request'}]
+                ]
+            }
+            send_message(chat_id, text, keyboard, parse_mode='HTML')
+        else:
+            text = (
+                f"🔍 Номер {formatted_phone} не найден в базе.\n\n"
+                f"Хотите зарегистрироваться? Это займёт пару секунд."
+            )
+            keyboard = {
+                'inline_keyboard': [
+                    [{'text': '✅ Зарегистрироваться', 'callback_data': 'register'}],
+                    [{'text': '📝 Оставить заявку без регистрации', 'callback_data': 'new_request'}]
+                ]
+            }
+            send_message(chat_id, text, keyboard)
 
 
 def show_authorized_menu(chat_id: int, user_data: dict):
@@ -291,6 +309,20 @@ def get_registered_menu():
             [{'text': '🌐 Открыть сайт', 'web_app': {'url': site_url}}]
         ]
     }
+
+
+def register_with_contact_name(chat_id: int, message_id: int, user_id: int):
+    '''Мгновенная регистрация с именем из контакта'''
+    state = user_states.get(user_id, {})
+    phone = state.get('phone')
+    name = state.get('contact_name', '')
+
+    if not phone or not name:
+        edit_message(chat_id, message_id, "❌ Что-то пошло не так. Начните заново: /start")
+        return
+
+    edit_message(chat_id, message_id, "⏳ Регистрирую...")
+    complete_registration(chat_id, user_id, name, phone)
 
 
 def start_registration(chat_id: int, message_id: int, user_id: int):
