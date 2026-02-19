@@ -62,7 +62,11 @@ def handle_message(message: dict):
     contact = message.get('contact')
 
     if contact:
-        process_shared_contact(chat_id, user_id, contact, first_name)
+        state = user_states.get(user_id, {})
+        if state.get('step') == 'waiting_reg_phone':
+            process_reg_phone_contact(chat_id, user_id, contact)
+        else:
+            process_shared_contact(chat_id, user_id, contact, first_name)
         return
 
     if text == '/start':
@@ -85,6 +89,8 @@ def handle_message(message: dict):
 
     if step == 'waiting_phone_text':
         process_phone_input(chat_id, user_id, text, first_name)
+    elif step == 'waiting_reg_phone':
+        process_reg_phone_text(chat_id, user_id, text)
     elif step == 'waiting_reg_name':
         process_reg_name(chat_id, user_id, text)
     elif step == 'waiting_car':
@@ -120,8 +126,16 @@ def handle_callback(callback: dict):
     elif data == 'enter_phone_text':
         user_states[user_id] = {'step': 'waiting_phone_text'}
         edit_message(chat_id, message_id,
-                     "📱 Введите ваш номер телефона:\n\n(например: +7 999 123-45-67)",
-                     get_cancel_button())
+                     "📱 Введите ваш номер телефона:\n\n(например: +7 999 123-45-67)")
+        contact_kb = {
+            'keyboard': [
+                [{'text': '📱 Отправить номер телефона', 'request_contact': True}]
+            ],
+            'resize_keyboard': True,
+            'one_time_keyboard': True,
+            'input_field_placeholder': '79991234567'
+        }
+        send_message(chat_id, "Или отправьте контакт кнопкой ниже 👇", contact_kb)
 
     answer_callback(callback['id'])
 
@@ -173,7 +187,8 @@ def ask_phone(chat_id: int, user_id: int, first_name: str):
             [{'text': '📱 Отправить номер телефона', 'request_contact': True}]
         ],
         'resize_keyboard': True,
-        'one_time_keyboard': True
+        'one_time_keyboard': True,
+        'input_field_placeholder': '79991234567'
     }
 
     inline_keyboard = {
@@ -299,8 +314,16 @@ def process_reg_name(chat_id: int, user_id: int, name: str):
     phone = state.get('phone')
 
     if not phone:
-        user_states[user_id] = {'step': 'waiting_phone_text'}
-        send_message(chat_id, "📱 Укажите номер телефона:")
+        user_states[user_id] = {'step': 'waiting_reg_phone', 'name': name.strip()}
+        contact_keyboard = {
+            'keyboard': [
+                [{'text': '📱 Отправить номер телефона', 'request_contact': True}]
+            ],
+            'resize_keyboard': True,
+            'one_time_keyboard': True,
+            'input_field_placeholder': '79991234567'
+        }
+        send_message(chat_id, "📱 Отправьте свой контакт или введите номер вручную:", contact_keyboard)
         return
 
     import secrets as sec
@@ -328,6 +351,75 @@ def process_reg_name(chat_id: int, user_id: int, name: str):
         send_message(chat_id, "❌ Ошибка регистрации. Возможно, этот номер уже зарегистрирован.\n\n/start - Попробовать снова")
         if user_id in user_states:
             del user_states[user_id]
+
+
+def complete_registration(chat_id: int, user_id: int, name: str, phone: str):
+    '''Завершение регистрации с именем и телефоном'''
+    import secrets as sec
+    password = sec.token_urlsafe(8)
+
+    remove_reply_keyboard(chat_id)
+
+    success = register_user(user_id, name, phone, password)
+
+    if success:
+        if user_id in user_states:
+            del user_states[user_id]
+
+        formatted_phone = format_phone(phone)
+        text = (
+            f"✅ Регистрация завершена!\n\n"
+            f"👤 Имя: {name}\n"
+            f"📱 Телефон: {formatted_phone}\n\n"
+            f"🔐 Ваш пароль для входа на сайт:\n"
+            f"<code>{password}</code>\n\n"
+            f"⚠️ Сохраните пароль! Он нужен для входа в личный кабинет."
+        )
+
+        keyboard = get_registered_menu()
+        send_message(chat_id, text, keyboard, parse_mode='HTML')
+    else:
+        send_message(chat_id, "❌ Ошибка регистрации. Возможно, этот номер уже зарегистрирован.\n\n/start - Попробовать снова")
+        if user_id in user_states:
+            del user_states[user_id]
+
+
+def process_reg_phone_contact(chat_id: int, user_id: int, contact: dict):
+    '''Обработка контакта при регистрации'''
+    state = user_states.get(user_id, {})
+    name = state.get('name')
+
+    if not name:
+        send_message(chat_id, "❌ Что-то пошло не так. Начните заново: /start")
+        return
+
+    phone = contact.get('phone_number', '')
+    normalized = normalize_phone(phone)
+
+    if len(normalized) != 11:
+        send_message(chat_id, "❌ Не удалось определить номер из контакта. Введите номер вручную:")
+        user_states[user_id] = {'step': 'waiting_reg_phone', 'name': name}
+        return
+
+    complete_registration(chat_id, user_id, name, normalized)
+
+
+def process_reg_phone_text(chat_id: int, user_id: int, phone_text: str):
+    '''Обработка номера вручную при регистрации'''
+    state = user_states.get(user_id, {})
+    name = state.get('name')
+
+    if not name:
+        send_message(chat_id, "❌ Что-то пошло не так. Начните заново: /start")
+        return
+
+    normalized = normalize_phone(phone_text)
+
+    if len(normalized) != 11:
+        send_message(chat_id, "❌ Некорректный номер. Введите номер телефона (например: +7 999 123-45-67):")
+        return
+
+    complete_registration(chat_id, user_id, name, normalized)
 
 
 def start_new_request(chat_id: int, message_id: int, user_id: int):
