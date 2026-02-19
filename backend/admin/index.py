@@ -67,8 +67,23 @@ def handler(event: dict, context) -> dict:
     action = query_params.get('action') or body_data.get('action')
     
     if action == 'upload_image':
-        from storage import upload_image_to_s3
-        image_url = upload_image_to_s3(body_data['image_base64'], body_data.get('image_name', 'image.jpg'))
+        from content import upload_image_to_s3
+        image_base64 = body_data.get('image_base64')
+        if not image_base64:
+            return {
+                'statusCode': 400,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'success': False, 'message': 'image_base64 required'}),
+                'isBase64Encoded': False
+            }
+        image_url = upload_image_to_s3(image_base64, body_data.get('image_name', 'image.jpg'))
+        if not image_url:
+            return {
+                'statusCode': 500,
+                'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+                'body': json.dumps({'success': False, 'message': 'Upload failed'}),
+                'isBase64Encoded': False
+            }
         return {
             'statusCode': 200,
             'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
