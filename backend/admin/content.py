@@ -4,25 +4,48 @@ import boto3
 import os
 from datetime import datetime
 
+import re
+import uuid
+
+SUPPORTED_MIME = {
+    'image/jpeg': '.jpg',
+    'image/png': '.png',
+    'image/webp': '.webp',
+    'image/gif': '.gif',
+    'image/heic': '.heic',
+    'image/heif': '.heif',
+    'image/avif': '.avif',
+    'image/svg+xml': '.svg',
+    'image/bmp': '.bmp',
+    'image/tiff': '.tiff',
+}
+
 def upload_image_to_s3(base64_data: str, filename: str) -> str:
     try:
-        image_data = base64.b64decode(base64_data.split(',')[1] if ',' in base64_data else base64_data)
-        
+        content_type = 'image/jpeg'
+        match = re.match(r'data:(image/[a-zA-Z0-9.+-]+);base64,', base64_data)
+        if match:
+            detected = match.group(1).lower()
+            if detected in SUPPORTED_MIME:
+                content_type = detected
+            image_data = base64.b64decode(base64_data.split(',')[1])
+        else:
+            image_data = base64.b64decode(base64_data)
+
+        ext = SUPPORTED_MIME.get(content_type, '.jpg')
+        safe_name = re.sub(r'[^a-zA-Z0-9._-]', '_', filename)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        unique = uuid.uuid4().hex[:8]
+        key = f'content/{timestamp}_{unique}_{safe_name}'
+        if not key.lower().endswith(ext):
+            key = key.rsplit('.', 1)[0] + ext if '.' in key.split('/')[-1] else key + ext
+
         s3 = boto3.client('s3',
             endpoint_url='https://bucket.poehali.dev',
             aws_access_key_id=os.environ['AWS_ACCESS_KEY_ID'],
             aws_secret_access_key=os.environ['AWS_SECRET_ACCESS_KEY']
         )
-        
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        key = f'content/{timestamp}_{filename}'
-        
-        content_type = 'image/jpeg'
-        if base64_data.startswith('data:image/png'):
-            content_type = 'image/png'
-        elif base64_data.startswith('data:image/webp'):
-            content_type = 'image/webp'
-        
+
         s3.put_object(
             Bucket='files',
             Key=key,

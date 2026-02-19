@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { useToast } from '@/hooks/use-toast'
 import Icon from '@/components/ui/icon'
 
 interface Work {
@@ -26,12 +27,16 @@ interface AdminWorksManagementProps {
   onRefresh: () => void
 }
 
+const API_URL = 'https://functions.poehali.dev/e06691eb-ff8f-4b28-88e2-e9e033b0dd28'
+
 export const AdminWorksManagement = ({ isLoading, onRefresh }: AdminWorksManagementProps) => {
   const [works, setWorks] = useState<Work[]>([])
   const [editingWork, setEditingWork] = useState<Work | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [galleryPreviews, setGalleryPreviews] = useState<string[]>([])
   const [galleryFiles, setGalleryFiles] = useState<Array<{ base64: string, name: string }>>([])
+  const { toast } = useToast()
 
   useEffect(() => {
     loadWorks()
@@ -39,15 +44,11 @@ export const AdminWorksManagement = ({ isLoading, onRefresh }: AdminWorksManagem
 
   const loadWorks = async () => {
     const token = localStorage.getItem('authToken')
-    
     try {
-      const response = await fetch('https://functions.poehali.dev/e06691eb-ff8f-4b28-88e2-e9e033b0dd28?action=content&type=works', {
+      const response = await fetch(`${API_URL}?action=content&type=works`, {
         method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Authorization': `Bearer ${token}` },
       })
-
       if (response.ok) {
         const data = await response.json()
         setWorks(data.items || [])
@@ -63,7 +64,7 @@ export const AdminWorksManagement = ({ isLoading, onRefresh }: AdminWorksManagem
 
     const totalImages = galleryPreviews.length + files.length
     if (totalImages > 10) {
-      alert('Максимум 10 фотографий')
+      toast({ title: 'Максимум 10 фотографий', variant: 'destructive' })
       return
     }
 
@@ -76,51 +77,55 @@ export const AdminWorksManagement = ({ isLoading, onRefresh }: AdminWorksManagem
       }
       reader.readAsDataURL(file)
     })
+
+    e.target.value = ''
   }
 
   const removeGalleryImage = (index: number) => {
-    const isExistingImage = editingWork?.gallery_urls && index < editingWork.gallery_urls.length
-    
-    if (isExistingImage) {
+    const existingCount = editingWork?.gallery_urls?.length || 0
+    const isExistingImage = index < existingCount
+
+    if (isExistingImage && editingWork) {
       const newGalleryUrls = [...(editingWork.gallery_urls || [])]
       newGalleryUrls.splice(index, 1)
       setEditingWork(prev => prev ? { ...prev, gallery_urls: newGalleryUrls } : null)
+      setGalleryPreviews(prev => prev.filter((_, i) => i !== index))
+    } else {
+      const fileIndex = index - existingCount
+      setGalleryPreviews(prev => prev.filter((_, i) => i !== index))
+      setGalleryFiles(prev => prev.filter((_, i) => i !== fileIndex))
     }
-    
-    setGalleryPreviews(prev => prev.filter((_, i) => i !== index))
-    setGalleryFiles(prev => prev.filter((_, i) => i !== index))
   }
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
+    if (isSaving) return
+
+    setIsSaving(true)
     const formData = new FormData(e.currentTarget)
-    
-    const data: any = {
-      type: 'works',
-      title: formData.get('title'),
-      description: formData.get('description'),
-      category: formData.get('category'),
-      price: parseFloat(formData.get('price') as string) || null,
-      display_order: parseInt(formData.get('display_order') as string) || 0,
-      is_active: formData.get('is_active') === 'true',
-    }
+    const token = localStorage.getItem('authToken')
 
-    if (editingWork) {
-      data.id = editingWork.id
-      data.gallery_urls = editingWork.gallery_urls || []
-    } else {
-      data.gallery_urls = []
-    }
+    try {
+      const data: Record<string, unknown> = {
+        type: 'works',
+        title: formData.get('title'),
+        description: formData.get('description'),
+        category: formData.get('category'),
+        price: parseFloat(formData.get('price') as string) || null,
+        display_order: parseInt(formData.get('display_order') as string) || 0,
+        is_active: formData.get('is_active') === 'true',
+      }
 
-    const existingUrls = editingWork?.gallery_urls || []
-    const newUrls: string[] = []
+      if (editingWork) {
+        data.id = editingWork.id
+      }
 
-    if (galleryFiles.length > 0) {
-      const token = localStorage.getItem('authToken')
+      const existingUrls = editingWork?.gallery_urls || []
+      const newUrls: string[] = []
 
       for (const file of galleryFiles) {
         try {
-          const uploadRes = await fetch('https://functions.poehali.dev/e06691eb-ff8f-4b28-88e2-e9e033b0dd28', {
+          const uploadRes = await fetch(API_URL, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -143,16 +148,13 @@ export const AdminWorksManagement = ({ isLoading, onRefresh }: AdminWorksManagem
           console.error('Ошибка загрузки фото:', error)
         }
       }
-    }
 
-    data.gallery_urls = [...existingUrls, ...newUrls].slice(0, 10)
-    data.image_url = data.gallery_urls[0] || null
+      data.gallery_urls = [...existingUrls, ...newUrls].slice(0, 10)
+      data.image_url = (data.gallery_urls as string[])[0] || null
 
-    const token = localStorage.getItem('authToken')
-    const action = editingWork ? 'update_content' : 'create_content'
+      const action = editingWork ? 'update_content' : 'create_content'
 
-    try {
-      const response = await fetch('https://functions.poehali.dev/e06691eb-ff8f-4b28-88e2-e9e033b0dd28', {
+      const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -162,15 +164,26 @@ export const AdminWorksManagement = ({ isLoading, onRefresh }: AdminWorksManagem
       })
 
       if (response.ok) {
+        toast({ title: editingWork ? 'Работа обновлена' : 'Работа создана' })
         setIsDialogOpen(false)
         setEditingWork(null)
         setGalleryPreviews([])
         setGalleryFiles([])
         loadWorks()
         onRefresh()
+      } else {
+        const err = await response.json().catch(() => ({}))
+        toast({
+          title: 'Ошибка сохранения',
+          description: err.error || 'Попробуйте ещё раз',
+          variant: 'destructive',
+        })
       }
     } catch (error) {
       console.error('Ошибка сохранения:', error)
+      toast({ title: 'Ошибка сети', description: 'Проверьте соединение', variant: 'destructive' })
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -178,9 +191,8 @@ export const AdminWorksManagement = ({ isLoading, onRefresh }: AdminWorksManagem
     if (!confirm('Удалить работу?')) return
 
     const token = localStorage.getItem('authToken')
-
     try {
-      const response = await fetch('https://functions.poehali.dev/e06691eb-ff8f-4b28-88e2-e9e033b0dd28', {
+      const response = await fetch(API_URL, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -190,6 +202,7 @@ export const AdminWorksManagement = ({ isLoading, onRefresh }: AdminWorksManagem
       })
 
       if (response.ok) {
+        toast({ title: 'Работа удалена' })
         loadWorks()
         onRefresh()
       }
@@ -209,6 +222,18 @@ export const AdminWorksManagement = ({ isLoading, onRefresh }: AdminWorksManagem
     setGalleryFiles([])
     setIsDialogOpen(true)
   }
+
+  const handleDialogChange = (open: boolean) => {
+    if (isSaving) return
+    setIsDialogOpen(open)
+    if (!open) {
+      setEditingWork(null)
+      setGalleryPreviews([])
+      setGalleryFiles([])
+    }
+  }
+
+  const acceptedFormats = "image/jpeg,image/png,image/webp,image/gif,image/heic,image/heif,image/avif,image/bmp,image/tiff,image/svg+xml"
 
   return (
     <>
@@ -309,7 +334,7 @@ export const AdminWorksManagement = ({ isLoading, onRefresh }: AdminWorksManagem
         </CardContent>
       </Card>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isDialogOpen} onOpenChange={handleDialogChange}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
@@ -324,6 +349,7 @@ export const AdminWorksManagement = ({ isLoading, onRefresh }: AdminWorksManagem
                 name="title"
                 defaultValue={editingWork?.title}
                 required
+                disabled={isSaving}
                 placeholder="Например: BMW X5 - Полная русификация"
               />
             </div>
@@ -335,6 +361,7 @@ export const AdminWorksManagement = ({ isLoading, onRefresh }: AdminWorksManagem
                 name="description"
                 defaultValue={editingWork?.description}
                 rows={3}
+                disabled={isSaving}
                 placeholder="Подробное описание работы"
               />
             </div>
@@ -346,6 +373,7 @@ export const AdminWorksManagement = ({ isLoading, onRefresh }: AdminWorksManagem
                   id="category"
                   name="category"
                   defaultValue={editingWork?.category}
+                  disabled={isSaving}
                   placeholder="SUV, Седан"
                 />
               </div>
@@ -359,6 +387,7 @@ export const AdminWorksManagement = ({ isLoading, onRefresh }: AdminWorksManagem
                   step="0.01"
                   defaultValue={editingWork?.price}
                   required
+                  disabled={isSaving}
                   placeholder="15000"
                 />
               </div>
@@ -372,12 +401,13 @@ export const AdminWorksManagement = ({ isLoading, onRefresh }: AdminWorksManagem
                   name="display_order"
                   type="number"
                   defaultValue={editingWork?.display_order || 0}
+                  disabled={isSaving}
                 />
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="is_active">Статус</Label>
-                <Select name="is_active" defaultValue={editingWork?.is_active !== false ? 'true' : 'false'}>
+                <Select name="is_active" defaultValue={editingWork?.is_active !== false ? 'true' : 'false'} disabled={isSaving}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -394,10 +424,14 @@ export const AdminWorksManagement = ({ isLoading, onRefresh }: AdminWorksManagem
               <Input
                 id="gallery"
                 type="file"
-                accept="image/*"
+                accept={acceptedFormats}
                 multiple
                 onChange={handleGalleryChange}
+                disabled={isSaving}
               />
+              <p className="text-xs text-muted-foreground">
+                JPG, PNG, WebP, GIF, HEIC, AVIF, BMP, TIFF, SVG
+              </p>
               {galleryPreviews.length > 0 && (
                 <div className="grid grid-cols-3 gap-2 mt-2">
                   {galleryPreviews.map((preview, index) => (
@@ -406,6 +440,10 @@ export const AdminWorksManagement = ({ isLoading, onRefresh }: AdminWorksManagem
                         src={preview}
                         alt={`Preview ${index + 1}`}
                         className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = ''
+                          ;(e.target as HTMLImageElement).className = 'hidden'
+                        }}
                       />
                       <Button
                         type="button"
@@ -413,6 +451,7 @@ export const AdminWorksManagement = ({ isLoading, onRefresh }: AdminWorksManagem
                         size="sm"
                         className="absolute top-1 right-1 h-6 w-6 p-0"
                         onClick={() => removeGalleryImage(index)}
+                        disabled={isSaving}
                       >
                         <Icon name="X" className="h-4 w-4" />
                       </Button>
@@ -429,11 +468,18 @@ export const AdminWorksManagement = ({ isLoading, onRefresh }: AdminWorksManagem
             </div>
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
+              <Button type="button" variant="outline" onClick={() => handleDialogChange(false)} disabled={isSaving}>
                 Отмена
               </Button>
-              <Button type="submit">
-                {editingWork ? 'Сохранить' : 'Создать'}
+              <Button type="submit" disabled={isSaving}>
+                {isSaving ? (
+                  <>
+                    <Icon name="Loader" className="mr-2 h-4 w-4 animate-spin" />
+                    Сохраняю...
+                  </>
+                ) : (
+                  editingWork ? 'Сохранить' : 'Создать'
+                )}
               </Button>
             </DialogFooter>
           </form>
