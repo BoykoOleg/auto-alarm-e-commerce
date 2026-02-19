@@ -99,6 +99,10 @@ def handle_message(message: dict):
         process_car_year(chat_id, user_id, text)
     elif step == 'waiting_message':
         process_message_text(chat_id, user_id, text)
+    elif step == 'waiting_reply':
+        process_reply_text(chat_id, user_id, text)
+    elif step == 'waiting_admin_reply':
+        process_admin_reply_text(chat_id, user_id, text)
 
 
 def handle_callback(callback: dict):
@@ -138,6 +142,13 @@ def handle_callback(callback: dict):
             'input_field_placeholder': '79991234567'
         }
         send_message(chat_id, "Или отправьте контакт кнопкой ниже 👇", contact_kb)
+
+    elif data.startswith('reply_'):
+        request_id = int(data.replace('reply_', ''))
+        start_reply(chat_id, message_id, user_id, request_id)
+    elif data.startswith('admin_reply_'):
+        request_id = int(data.replace('admin_reply_', ''))
+        start_admin_reply(chat_id, message_id, user_id, request_id)
 
     answer_callback(callback['id'])
 
@@ -653,6 +664,214 @@ def cancel_operation(chat_id: int, message_id: int, user_id: int):
         keyboard = None
 
     edit_message(chat_id, message_id, text, keyboard)
+
+
+def start_reply(chat_id: int, message_id: int, user_id: int, request_id: int):
+    '''Клиент начинает отвечать на сообщение по заявке'''
+    user_states[user_id] = {'step': 'waiting_reply', 'request_id': request_id}
+    text = f"💬 Ответ на заявку #{request_id}\n\nНапишите сообщение:"
+    edit_message(chat_id, message_id, text, get_cancel_button())
+
+
+def start_admin_reply(chat_id: int, message_id: int, user_id: int, request_id: int):
+    '''Админ начинает отвечать на сообщение клиента'''
+    user_states[user_id] = {'step': 'waiting_admin_reply', 'request_id': request_id}
+    text = f"💬 Ответ от компании на заявку #{request_id}\n\nНапишите сообщение:"
+    edit_message(chat_id, message_id, text, get_cancel_button())
+
+
+def process_reply_text(chat_id: int, user_id: int, text: str):
+    '''Обработка ответа клиента из Telegram'''
+    state = user_states.get(user_id, {})
+    request_id = state.get('request_id')
+
+    if not request_id:
+        send_message(chat_id, "❌ Ошибка. Начните заново: /start")
+        return
+
+    if len(text.strip()) < 1:
+        send_message(chat_id, "❌ Сообщение не может быть пустым. Напишите текст:")
+        return
+
+    success = save_client_message(user_id, request_id, text.strip())
+
+    if user_id in user_states:
+        del user_states[user_id]
+
+    if success:
+        buttons = {
+            'inline_keyboard': [
+                [{'text': '💬 Написать ещё', 'callback_data': f'reply_{request_id}'}],
+                [{'text': '◀️ Главное меню', 'callback_data': 'main_menu'}]
+            ]
+        }
+        send_message(chat_id, f"✅ Сообщение отправлено по заявке #{request_id}", buttons)
+    else:
+        send_message(chat_id, "❌ Не удалось отправить сообщение. Возможно, заявка не найдена.\n\n/start - Меню")
+
+
+def process_admin_reply_text(chat_id: int, user_id: int, text: str):
+    '''Обработка ответа админа из Telegram'''
+    state = user_states.get(user_id, {})
+    request_id = state.get('request_id')
+
+    if not request_id:
+        send_message(chat_id, "❌ Ошибка. Попробуйте снова.")
+        return
+
+    if len(text.strip()) < 1:
+        send_message(chat_id, "❌ Сообщение не может быть пустым. Напишите текст:")
+        return
+
+    success = save_admin_message(request_id, text.strip())
+
+    if user_id in user_states:
+        del user_states[user_id]
+
+    if success:
+        buttons = {
+            'inline_keyboard': [
+                [{'text': '💬 Написать ещё', 'callback_data': f'admin_reply_{request_id}'}]
+            ]
+        }
+        send_message(chat_id, f"✅ Ответ отправлен клиенту по заявке #{request_id}", buttons)
+    else:
+        send_message(chat_id, "❌ Не удалось отправить сообщение.")
+
+
+def save_client_message(telegram_id: int, request_id: int, message_text: str) -> bool:
+    '''Сохранить сообщение клиента в БД и уведомить админа'''
+    try:
+        conn = get_db()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        cur.execute("""
+            SELECT r.id, r.car_brand, r.car_model, r.car_year, r.client_name,
+                   u.id as user_id, u.name, u.phone
+            FROM russification_requests r
+            JOIN users u ON r.user_id = u.id
+            WHERE r.id = %s AND u.telegram_id = %s
+        """, (request_id, telegram_id))
+
+        req = cur.fetchone()
+        if not req:
+            cur.close()
+            conn.close()
+            return False
+
+        cur.execute("""
+            INSERT INTO request_messages (request_id, user_id, sender_type, message_text)
+            VALUES (%s, %s, 'client', %s)
+        """, (request_id, req['user_id'], message_text))
+        conn.commit()
+
+        bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
+        admin_chat_id = os.environ.get('TELEGRAM_CHAT_ID')
+        if bot_token and admin_chat_id:
+            car_info = f"{req['car_brand']} {req['car_model']}"
+            if req.get('car_year'):
+                car_info += f" ({req['car_year']})"
+
+            notification = (
+                f"💬 <b>Новое сообщение от клиента</b>\n\n"
+                f"📝 Заявка #{request_id}\n"
+                f"🚗 {car_info}\n"
+                f"👤 {req['client_name']}\n"
+                f"📞 {req['phone']}\n\n"
+                f"💭 {message_text}"
+            )
+
+            keyboard = json.dumps({
+                'inline_keyboard': [
+                    [{'text': '💬 Ответить', 'callback_data': f'admin_reply_{request_id}'}]
+                ]
+            })
+
+            try:
+                url = f'https://api.telegram.org/bot{bot_token}/sendMessage'
+                data = json.dumps({
+                    'chat_id': admin_chat_id,
+                    'text': notification,
+                    'parse_mode': 'HTML',
+                    'reply_markup': keyboard
+                }).encode('utf-8')
+                r = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'})
+                urllib.request.urlopen(r, timeout=5)
+            except:
+                pass
+
+        cur.close()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"Save client message error: {e}")
+        return False
+
+
+def save_admin_message(request_id: int, message_text: str) -> bool:
+    '''Сохранить ответ админа в БД и уведомить клиента'''
+    try:
+        conn = get_db()
+        cur = conn.cursor(cursor_factory=RealDictCursor)
+
+        cur.execute("""
+            SELECT r.id, r.user_id, r.car_brand, r.car_model, r.car_year,
+                   u.telegram_id
+            FROM russification_requests r
+            LEFT JOIN users u ON r.user_id = u.id
+            WHERE r.id = %s
+        """, (request_id,))
+
+        req = cur.fetchone()
+        if not req:
+            cur.close()
+            conn.close()
+            return False
+
+        cur.execute("""
+            INSERT INTO request_messages (request_id, user_id, sender_type, message_text)
+            VALUES (%s, %s, 'company', %s)
+        """, (request_id, req['user_id'], message_text))
+        conn.commit()
+
+        client_telegram = req.get('telegram_id')
+        bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
+        if bot_token and client_telegram:
+            car_info = f"{req['car_brand']} {req['car_model']}"
+            if req.get('car_year'):
+                car_info += f" ({req['car_year']})"
+
+            notification = (
+                f"💬 <b>Новое сообщение по заявке #{request_id}</b>\n"
+                f"🚗 {car_info}\n\n"
+                f"🏢 SmartLine:\n{message_text}"
+            )
+
+            keyboard = json.dumps({
+                'inline_keyboard': [
+                    [{'text': '💬 Ответить', 'callback_data': f'reply_{request_id}'}]
+                ]
+            })
+
+            try:
+                url = f'https://api.telegram.org/bot{bot_token}/sendMessage'
+                data = json.dumps({
+                    'chat_id': client_telegram,
+                    'text': notification,
+                    'parse_mode': 'HTML',
+                    'reply_markup': keyboard
+                }).encode('utf-8')
+                r = urllib.request.Request(url, data=data, headers={'Content-Type': 'application/json'})
+                urllib.request.urlopen(r, timeout=5)
+            except:
+                pass
+
+        cur.close()
+        conn.close()
+        return True
+    except Exception as e:
+        print(f"Save admin message error: {e}")
+        return False
 
 
 def handle_password_recovery(chat_id: int, user_id: int):

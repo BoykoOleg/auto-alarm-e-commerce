@@ -2,6 +2,7 @@ import json
 import os
 import base64
 import boto3
+import urllib.request
 from datetime import datetime
 
 
@@ -118,6 +119,8 @@ def handle_send_admin_message(cur, conn, request_id: int, data: dict) -> dict:
     result = cur.fetchone()
     conn.commit()
     
+    notify_client_telegram(cur, request_id, message_text, file_name)
+    
     return {
         'statusCode': 200,
         'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
@@ -129,6 +132,59 @@ def handle_send_admin_message(cur, conn, request_id: int, data: dict) -> dict:
         }),
         'isBase64Encoded': False
     }
+
+
+def notify_client_telegram(cur, request_id: int, message_text: str, file_name: str = None):
+    '''Уведомить клиента в Telegram о новом сообщении от компании'''
+    bot_token = os.environ.get('TELEGRAM_BOT_TOKEN')
+    if not bot_token:
+        return
+
+    try:
+        cur.execute("""
+            SELECT r.car_brand, r.car_model, r.car_year,
+                   u.telegram_id
+            FROM russification_requests r
+            LEFT JOIN users u ON r.user_id = u.id
+            WHERE r.id = %s
+        """, (request_id,))
+
+        data = cur.fetchone()
+        if not data or not data.get('telegram_id'):
+            return
+
+        telegram_id = data['telegram_id']
+        car_info = f"{data['car_brand']} {data['car_model']}"
+        if data.get('car_year'):
+            car_info += f" ({data['car_year']})"
+
+        text = f"💬 <b>Новое сообщение по заявке #{request_id}</b>\n"
+        text += f"🚗 {car_info}\n\n"
+        text += f"🏢 SmartLine:\n{message_text or '(файл)'}"
+        if file_name:
+            text += f"\n📎 {file_name}"
+
+        keyboard = {
+            'inline_keyboard': [
+                [{'text': '💬 Ответить', 'callback_data': f'reply_{request_id}'}]
+            ]
+        }
+
+        req_data = json.dumps({
+            'chat_id': telegram_id,
+            'text': text,
+            'parse_mode': 'HTML',
+            'reply_markup': keyboard
+        }).encode('utf-8')
+
+        req = urllib.request.Request(
+            f'https://api.telegram.org/bot{bot_token}/sendMessage',
+            data=req_data,
+            headers={'Content-Type': 'application/json'}
+        )
+        urllib.request.urlopen(req, timeout=5)
+    except Exception as e:
+        print(f"Notify client telegram error: {e}")
 
 
 def upload_file_to_s3(base64_content: str, file_name: str, file_type: str) -> tuple:

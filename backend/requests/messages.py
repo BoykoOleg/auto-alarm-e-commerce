@@ -2,7 +2,7 @@ import json
 import os
 import base64
 import boto3
-import requests
+import requests as http_requests
 from datetime import datetime
 
 
@@ -196,14 +196,21 @@ def send_telegram_notification(cur, request_id: int, user_id: int, message_text:
         if file_name:
             notification += f"\n📎 Файл: {file_name}"
         
-        requests.post(
+        keyboard = {
+            'inline_keyboard': [
+                [{'text': '💬 Ответить', 'callback_data': f'admin_reply_{request_id}'}]
+            ]
+        }
+        
+        http_requests.post(
             f'https://api.telegram.org/bot{bot_token}/sendMessage',
             json={
                 'chat_id': chat_id,
                 'text': notification,
-                'parse_mode': 'HTML'
+                'parse_mode': 'HTML',
+                'reply_markup': keyboard
             },
             timeout=5
         )
-    except:
-        pass
+    except Exception as e:
+        print(f"Telegram notification error: {e}")
