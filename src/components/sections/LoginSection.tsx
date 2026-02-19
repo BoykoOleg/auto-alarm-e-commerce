@@ -1,101 +1,120 @@
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import Icon from '@/components/ui/icon'
-const AUTH_URL = 'https://functions.poehali.dev/aa3aea15-0141-490d-aa72-389642c2efc3'
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import Icon from "@/components/ui/icon";
+const AUTH_URL =
+  "https://functions.poehali.dev/aa3aea15-0141-490d-aa72-389642c2efc3";
 
 interface LoginSectionProps {
-  setActiveSection: (section: string) => void
-  onLoginSuccess: (userData: any) => void
+  setActiveSection: (section: string) => void;
+  onLoginSuccess: (userData: any) => void;
 }
 
-export const LoginSection = ({ setActiveSection, onLoginSuccess }: LoginSectionProps) => {
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle')
-  const [errorMessage, setErrorMessage] = useState('')
+export const LoginSection = ({
+  setActiveSection,
+  onLoginSuccess,
+}: LoginSectionProps) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState<
+    "idle" | "success" | "error"
+  >("idle");
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-    setSubmitStatus('idle')
-    setErrorMessage('')
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitStatus("idle");
+    setErrorMessage("");
 
-    const formElement = e.target as HTMLFormElement
+    const formElement = e.target as HTMLFormElement;
     const formData = {
-      phone: (formElement.elements.namedItem('phone') as HTMLInputElement).value,
-      password: (formElement.elements.namedItem('password') as HTMLInputElement).value,
-    }
+      phone: (formElement.elements.namedItem("phone") as HTMLInputElement)
+        .value,
+      password: (formElement.elements.namedItem("password") as HTMLInputElement)
+        .value,
+    };
 
     try {
       const response = await fetch(AUTH_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'login', ...formData }),
-      })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "login", ...formData }),
+      });
 
-      const result = await response.json()
+      const result = await response.json();
 
       if (response.ok && result.success) {
-        setSubmitStatus('success')
-        localStorage.setItem('authToken', result.token)
-        localStorage.setItem('userData', JSON.stringify(result.user))
-        onLoginSuccess(result.user)
-        setTimeout(() => setActiveSection('dashboard'), 1000)
+        setSubmitStatus("success");
+        localStorage.setItem("authToken", result.token);
+        localStorage.setItem("userData", JSON.stringify(result.user));
+        onLoginSuccess(result.user);
+        setTimeout(() => setActiveSection("dashboard"), 1000);
       } else {
-        setSubmitStatus('error')
-        setErrorMessage(result.message || 'Неверный телефон или пароль')
+        setSubmitStatus("error");
+        setErrorMessage(result.message || "Неверный телефон или пароль");
       }
     } catch (error) {
-      setSubmitStatus('error')
-      setErrorMessage('Ошибка подключения к серверу')
+      setSubmitStatus("error");
+      setErrorMessage("Ошибка подключения к серверу");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   const handleRegister = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-    setSubmitStatus('idle')
-    setErrorMessage('')
+    e.preventDefault();
+    setIsSubmitting(true);
+    setSubmitStatus("idle");
+    setErrorMessage("");
 
-    const formElement = e.target as HTMLFormElement
+    const formElement = e.target as HTMLFormElement;
     const formData = {
-      name: (formElement.elements.namedItem('name') as HTMLInputElement).value,
-      phone: (formElement.elements.namedItem('reg-phone') as HTMLInputElement).value,
-      company_name: (formElement.elements.namedItem('company') as HTMLInputElement).value,
-      password: (formElement.elements.namedItem('reg-password') as HTMLInputElement).value,
-    }
+      name: (formElement.elements.namedItem("name") as HTMLInputElement).value,
+      phone: (formElement.elements.namedItem("reg-phone") as HTMLInputElement)
+        .value,
+      company_name: (
+        formElement.elements.namedItem("company") as HTMLInputElement
+      ).value,
+      password: (
+        formElement.elements.namedItem("reg-password") as HTMLInputElement
+      ).value,
+    };
 
     try {
       const response = await fetch(AUTH_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'register', ...formData }),
-      })
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "register", ...formData }),
+      });
 
-      const result = await response.json()
+      const result = await response.json();
 
       if (response.ok && result.success) {
-        setSubmitStatus('success')
-        localStorage.setItem('authToken', result.token)
-        localStorage.setItem('userData', JSON.stringify(result.user))
-        onLoginSuccess(result.user)
-        setTimeout(() => setActiveSection('dashboard'), 1000)
+        setSubmitStatus("success");
+        localStorage.setItem("authToken", result.token);
+        localStorage.setItem("userData", JSON.stringify(result.user));
+        onLoginSuccess(result.user);
+        setTimeout(() => setActiveSection("dashboard"), 1000);
       } else {
-        setSubmitStatus('error')
-        setErrorMessage(result.message || 'Ошибка регистрации')
+        setSubmitStatus("error");
+        setErrorMessage(result.message || "Ошибка регистрации");
       }
     } catch (error) {
-      setSubmitStatus('error')
-      setErrorMessage('Ошибка подключения к серверу')
+      setSubmitStatus("error");
+      setErrorMessage("Ошибка подключения к серверу");
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
   return (
     <section className="py-20 min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/5 to-accent/5">
@@ -105,13 +124,15 @@ export const LoginSection = ({ setActiveSection, onLoginSuccess }: LoginSectionP
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setActiveSection('home')}
+              onClick={() => setActiveSection("home")}
               className="mb-4"
             >
               <Icon name="ArrowLeft" className="mr-2 h-4 w-4" />
               На главную
             </Button>
-            <h1 className="font-heading text-3xl font-bold mb-2">Личный кабинет</h1>
+            <h1 className="font-heading text-3xl font-bold mb-2">
+              Личный кабинет
+            </h1>
             <p className="text-muted-foreground">
               Войдите или зарегистрируйтесь для работы с заявками
             </p>
@@ -139,7 +160,7 @@ export const LoginSection = ({ setActiveSection, onLoginSuccess }: LoginSectionP
                         id="phone"
                         name="phone"
                         type="tel"
-                        placeholder="+7 (999) 123-45-67"
+                        placeholder="+7(999)123-45-67"
                         required
                       />
                     </div>
@@ -154,27 +175,34 @@ export const LoginSection = ({ setActiveSection, onLoginSuccess }: LoginSectionP
                       />
                     </div>
 
-                    {submitStatus === 'success' && (
+                    {submitStatus === "success" && (
                       <div className="bg-green-50 text-green-700 p-3 rounded-lg flex items-center gap-2">
                         <Icon name="CheckCircle" className="h-5 w-5" />
                         <span>Вход выполнен успешно!</span>
                       </div>
                     )}
 
-                    {submitStatus === 'error' && (
+                    {submitStatus === "error" && (
                       <div className="bg-red-50 text-red-700 p-3 rounded-lg flex items-center gap-2">
                         <Icon name="XCircle" className="h-5 w-5" />
                         <span>{errorMessage}</span>
                       </div>
                     )}
 
-                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      disabled={isSubmitting}
+                    >
                       <Icon name="LogIn" className="mr-2 h-4 w-4" />
-                      {isSubmitting ? 'Вход...' : 'Войти'}
+                      {isSubmitting ? "Вход..." : "Войти"}
                     </Button>
 
                     <div className="text-center text-sm">
-                      <a href="/forgot-password" className="text-primary hover:underline">
+                      <a
+                        href="/forgot-password"
+                        className="text-primary hover:underline"
+                      >
                         Забыли пароль?
                       </a>
                     </div>
@@ -204,7 +232,9 @@ export const LoginSection = ({ setActiveSection, onLoginSuccess }: LoginSectionP
                       />
                     </div>
                     <div>
-                      <Label htmlFor="company">Название компании (необязательно)</Label>
+                      <Label htmlFor="company">
+                        Название компании (необязательно)
+                      </Label>
                       <Input
                         id="company"
                         name="company"
@@ -218,7 +248,7 @@ export const LoginSection = ({ setActiveSection, onLoginSuccess }: LoginSectionP
                         id="reg-phone"
                         name="reg-phone"
                         type="tel"
-                        placeholder="+7 (999) 123-45-67"
+                        placeholder="+7(999)123-45-67"
                         required
                       />
                     </div>
@@ -234,23 +264,27 @@ export const LoginSection = ({ setActiveSection, onLoginSuccess }: LoginSectionP
                       />
                     </div>
 
-                    {submitStatus === 'success' && (
+                    {submitStatus === "success" && (
                       <div className="bg-green-50 text-green-700 p-3 rounded-lg flex items-center gap-2">
                         <Icon name="CheckCircle" className="h-5 w-5" />
                         <span>Регистрация успешна!</span>
                       </div>
                     )}
 
-                    {submitStatus === 'error' && (
+                    {submitStatus === "error" && (
                       <div className="bg-red-50 text-red-700 p-3 rounded-lg flex items-center gap-2">
                         <Icon name="XCircle" className="h-5 w-5" />
                         <span>{errorMessage}</span>
                       </div>
                     )}
 
-                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      disabled={isSubmitting}
+                    >
                       <Icon name="UserPlus" className="mr-2 h-4 w-4" />
-                      {isSubmitting ? 'Регистрация...' : 'Зарегистрироваться'}
+                      {isSubmitting ? "Регистрация..." : "Зарегистрироваться"}
                     </Button>
                   </form>
                 </CardContent>
@@ -260,7 +294,7 @@ export const LoginSection = ({ setActiveSection, onLoginSuccess }: LoginSectionP
         </div>
       </div>
     </section>
-  )
-}
+  );
+};
 
-export default LoginSection
+export default LoginSection;
