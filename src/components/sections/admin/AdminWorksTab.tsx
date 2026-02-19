@@ -49,15 +49,16 @@ export const AdminWorksTab = ({
                       <div className="flex-1">
                         <div className="flex items-center gap-2 mb-1 flex-wrap">
                           <p className="font-semibold">
+                            <span className="text-muted-foreground font-normal">#{String(work.request_id).padStart(3, '0')}</span>{' '}
                             {request?.car_brand} {request?.car_model}
                           </p>
                           {work.is_bonus_paid ? (
                             <Badge variant="outline" className="bg-green-50">
-                              ✓ Выплачено
+                              Бонус выплачен
                             </Badge>
                           ) : (
-                            <Badge variant="destructive">
-                              Не выплачено
+                            <Badge variant="secondary">
+                              Бонус начислен
                             </Badge>
                           )}
                         </div>

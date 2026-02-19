@@ -38,7 +38,7 @@ export const DashboardWorksHistory = ({ works, bonusHistory, isLoading }: Dashbo
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <Icon name="CheckCircle" className="h-4 w-4 text-green-500" />
-                      <span className="font-medium">Заявка #{work.request_id}</span>
+                      <span className="font-medium">Заявка #{String(work.request_id).padStart(3, '0')}</span>
                     </div>
                     <div className="text-sm text-muted-foreground space-y-1">
                       <div className="flex items-center gap-2">
@@ -55,12 +55,12 @@ export const DashboardWorksHistory = ({ works, bonusHistory, isLoading }: Dashbo
                         <Icon name="Award" className="h-3 w-3" />
                         <span>Бонусов: {work.bonus_earned}</span>
                         {work.is_bonus_paid ? (
-                          <Badge variant="outline" className="ml-2">
-                            Выплачено
+                          <Badge variant="outline" className="ml-2 bg-green-50">
+                            Бонус выплачен
                           </Badge>
                         ) : (
                           <Badge variant="secondary" className="ml-2">
-                            Ожидает
+                            Бонус начислен
                           </Badge>
                         )}
                       </div>

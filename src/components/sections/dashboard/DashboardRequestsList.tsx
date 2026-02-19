@@ -61,6 +61,7 @@ export const DashboardRequestsList = ({ requests, isLoading }: DashboardRequests
                 <div key={request.id} className="flex flex-col p-3 border rounded-lg">
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <span className="font-medium">
+                      <span className="text-muted-foreground">#{String(request.id).padStart(3, '0')}</span>{' '}
                       {request.car_brand} {request.car_model} {request.car_year}
                     </span>
                     {getStatusBadge(request.status)}

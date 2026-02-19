@@ -133,7 +133,10 @@ export const AdminPartnersTab = ({
                             >
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 flex-wrap">
-                                  <span className="font-medium">{req.client_name}</span>
+                                  <span className="font-medium">
+                                    <span className="text-muted-foreground">#{String(req.id).padStart(3, '0')}</span>{' '}
+                                    {req.client_name}
+                                  </span>
                                   {getStatusBadge(req.status)}
                                 </div>
                                 <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1 flex-wrap">
