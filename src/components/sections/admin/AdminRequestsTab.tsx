@@ -12,6 +12,7 @@ import { AdminRequestChat } from '@/components/AdminRequestChat'
 interface AdminRequestsTabProps {
   requests: any[]
   users: any[]
+  works: any[]
   isLoading: boolean
   onUpdateStatus: (requestId: number, newStatus: string) => void
   onCompleteWork: (requestId: number, workCost: number, bonusEarned: number) => void
@@ -21,6 +22,7 @@ interface AdminRequestsTabProps {
 export const AdminRequestsTab = ({
   requests,
   users,
+  works,
   isLoading,
   onUpdateStatus,
   onCompleteWork,
@@ -191,15 +193,32 @@ export const AdminRequestsTab = ({
                           </SelectContent>
                         </Select>
 
-                        {request.status === 'in_progress' && (
-                          <Button
-                            size="sm"
-                            className="h-7 text-xs px-2"
-                            onClick={() => setSelectedRequest(request)}
-                          >
-                            <Icon name="CheckCircle" className="h-3 w-3" />
-                          </Button>
-                        )}
+                        {(() => {
+                          const work = works.find(w => w.request_id === request.id)
+                          if (request.status === 'in_progress' && !work) {
+                            return (
+                              <Button
+                                size="sm"
+                                className="h-7 text-xs px-2"
+                                onClick={() => setSelectedRequest(request)}
+                              >
+                                <Icon name="CheckCircle" className="h-3 w-3" />
+                              </Button>
+                            )
+                          }
+                          if (work) {
+                            return (
+                              <Button
+                                size="sm"
+                                disabled
+                                className={`h-7 text-xs px-2 ${work.is_bonus_paid ? 'bg-green-600 text-white opacity-100' : 'bg-black text-white opacity-100'}`}
+                              >
+                                <Icon name="CheckCircle" className="h-3 w-3" />
+                              </Button>
+                            )
+                          }
+                          return null
+                        })()}
 
                         <Button
                           variant="outline"

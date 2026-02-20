@@ -282,6 +282,15 @@ def handle_complete_work(cur, conn, body: dict) -> dict:
             'isBase64Encoded': False
         }
     
+    cur.execute("SELECT id FROM completed_works WHERE request_id = %s LIMIT 1", (request_id,))
+    if cur.fetchone():
+        return {
+            'statusCode': 409,
+            'headers': {'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*'},
+            'body': json.dumps({'success': False, 'message': 'Bonuses already accrued for this request'}),
+            'isBase64Encoded': False
+        }
+    
     cur.execute("SELECT user_id FROM russification_requests WHERE id = %s", (request_id,))
     request = cur.fetchone()
     

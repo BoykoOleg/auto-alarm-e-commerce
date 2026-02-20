@@ -265,6 +265,7 @@ export const AdminDashboard = ({ setActiveSection, onLogout }: AdminDashboardPro
             <AdminRequestsTab
               requests={requests}
               users={users}
+              works={works}
               isLoading={isLoading}
               onUpdateStatus={handleUpdateStatus}
               onCompleteWork={handleCompleteWork}
