@@ -26,12 +26,10 @@ export const Header = ({ activeSection, setActiveSection, isAuthenticated }: Hea
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-16 items-center justify-between px-4">
-        <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary">
-            <Icon name="Shield" className="h-6 w-6 text-primary-foreground" />
-          </div>
-          <span className="font-heading text-xl font-bold">Smartline</span>
-        </div>
+        <button onClick={() => setActiveSection('home')} className="flex items-center gap-0 select-none">
+          <span className="font-heading text-2xl font-black tracking-tight text-foreground uppercase leading-none">КОНТ</span>
+          <span className="font-heading text-2xl font-black tracking-tight bg-primary text-primary-foreground uppercase leading-none px-2 py-0.5">АВТО</span>
+        </button>
         
         <nav className="hidden md:flex items-center gap-6">
           <button
@@ -118,11 +116,9 @@ export const Header = ({ activeSection, setActiveSection, isAuthenticated }: Hea
             </SheetTrigger>
             <SheetContent side="right" className="w-[280px] sm:w-[350px]">
               <SheetHeader>
-                <SheetTitle className="flex items-center gap-2">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-                    <Icon name="Shield" className="h-5 w-5 text-primary-foreground" />
-                  </div>
-                  <span className="font-heading text-lg font-bold">Smartline</span>
+                <SheetTitle className="flex items-center gap-0">
+                  <span className="font-heading text-xl font-black tracking-tight text-foreground uppercase leading-none">КОНТ</span>
+                  <span className="font-heading text-xl font-black tracking-tight bg-primary text-primary-foreground uppercase leading-none px-2 py-0.5">АВТО</span>
                 </SheetTitle>
               </SheetHeader>
               
